@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Roost — property income & expenses</title>
+<meta name="description" content="Track rental income and expenses across your property portfolio — calm, clear, and controllable by AI." />
+<meta name="theme-color" content="#4C7A64" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <aside class="side">
+    <div class="brand"><div class="roof">🏡</div><h1 class="disp">Roost</h1></div>
+    <div class="navlbl">Portfolio</div>
+    <div class="nav on" data-view="overview" tabindex="0" role="button"><span class="ic">◧</span> Overview</div>
+    <div class="nav" data-view="properties" tabindex="0" role="button"><span class="ic">⌂</span> Properties</div>
+    <div class="nav" data-view="income" tabindex="0" role="button"><span class="ic">↗</span> Income</div>
+    <div class="nav" data-view="expenses" tabindex="0" role="button"><span class="ic">▤</span> Expenses</div>
+    <div class="nav" data-view="reports" tabindex="0" role="button"><span class="ic">▦</span> Reports</div>
+    <div class="navlbl">Account</div>
+    <div class="nav" data-view="settings" tabindex="0" role="button"><span class="ic">⚙</span> Settings</div>
+    <div class="foot">
+      <div class="avt" id="avt">HK</div>
+      <div style="line-height:1.35">
+        <div style="font-weight:600;font-size:13px;color:#F4F2EA" id="footName">Hard K.</div>
+        <div style="font-size:11px;color:#8AA99B" id="footCount">4 properties</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="ai">
+        <div class="field">
+          <span style="color:var(--amber);font-size:16px">✦</span>
+          <input id="aiInput" placeholder="Ask Roost — “log $240 plumbing at Marine Parade” or “what’s my net?”" aria-label="AI command" />
+          <button class="go" id="aiGo">Ask</button>
+        </div>
+        <div class="aians" id="aiAns"></div>
+      </div>
+      <div class="seg" role="group" aria-label="Rent period">
+        <button id="segWeek">Per week</button>
+        <button id="segMonth" class="on">Per month</button>
+      </div>
+      <button class="addbtn" id="addProp">+ Add property</button>
+    </div>
+
+    <section class="view active" data-view="overview" id="view-overview">
+      <div class="kpis" id="kpis"></div>
+
+      <div class="dash-rows">
+        <div class="grid1">
+          <div class="card">
+            <h3>Cashflow — last 6 months <span class="tag">rent in vs expenses out</span></h3>
+            <div class="chart" id="chart"></div>
+            <div class="legend">
+              <span><b style="background:var(--income)"></b>Rent income</span>
+              <span><b style="background:var(--expense)"></b>Expenses</span>
+            </div>
+          </div>
+
+          <div class="card propcard">
+            <h3 style="margin-bottom:8px">Properties <span class="tag">rent &amp; expenses per property</span></h3>
+            <div class="prow phead">
+              <span>Property</span><span>Status</span><span>Rent</span><span class="hide-sm">Expenses (mo)</span><span>Net</span>
+            </div>
+            <div id="props"></div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card" style="margin-bottom:0">
+            <h3 style="margin-bottom:8px">Recent expenses
+              <button class="addbtn" id="addExp" style="padding:7px 12px;font-size:12px">+ Add</button>
+            </h3>
+            <div id="exps"></div>
+          </div>
+          <div class="card" style="margin-bottom:0">
+            <h3 style="margin-bottom:4px">Where it goes <span class="tag">this month</span></h3>
+            <div class="brk" id="brk"></div>
+            <div style="margin-top:20px;padding-top:15px;border-top:1px solid var(--line);display:flex;justify-content:space-between">
+              <span style="font-weight:600">Total out</span>
+              <span class="mono" id="totalOut" style="font-weight:700;color:var(--expense)"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view="properties" id="view-properties">
+      <div class="card propcard" style="margin-bottom:20px">
+        <h3 style="margin-bottom:8px">All properties <span class="tag">manage your portfolio</span>
+          <button class="addbtn" id="addPropView" style="padding:7px 12px;font-size:12px">+ Add property</button>
+        </h3>
+        <div class="prow prow-actions phead">
+          <span>Property</span><span>Status</span><span>Rent</span><span class="hide-sm">Expenses (mo)</span><span>Net</span><span></span>
+        </div>
+        <div id="propsFull"></div>
+      </div>
+    </section>
+
+    <section class="view" data-view="income" id="view-income">
+      <div class="kpis" id="incomeKpis" style="margin-bottom:20px"></div>
+      <div class="card propcard">
+        <h3 style="margin-bottom:8px">Rent income by property <span class="tag">per property breakdown</span></h3>
+        <div class="prow prow4 phead">
+          <span>Property</span><span>Status</span><span>Rent</span><span>Monthly</span>
+        </div>
+        <div id="incomeList"></div>
+      </div>
+    </section>
+
+    <section class="view" data-view="expenses" id="view-expenses">
+      <div class="grid2">
+        <div class="card" style="margin-bottom:0">
+          <h3 style="margin-bottom:8px">All expenses <span class="tag" id="expCount"></span>
+            <button class="addbtn" id="addExpView" style="padding:7px 12px;font-size:12px">+ Add</button>
+          </h3>
+          <div id="expsFull"></div>
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <h3 style="margin-bottom:4px">Where it goes <span class="tag">this month</span></h3>
+          <div class="brk" id="brkFull"></div>
+          <div style="margin-top:20px;padding-top:15px;border-top:1px solid var(--line);display:flex;justify-content:space-between">
+            <span style="font-weight:600">Total out</span>
+            <span class="mono" id="totalOutFull" style="font-weight:700;color:var(--expense)"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view="reports" id="view-reports">
+      <div class="kpis" id="reportsKpis" style="margin-bottom:20px"></div>
+      <div class="card">
+        <h3>Cashflow — last 6 months <span class="tag">rent in vs expenses out</span></h3>
+        <div class="chart" id="chartFull"></div>
+        <div class="legend">
+          <span><b style="background:var(--income)"></b>Rent income</span>
+          <span><b style="background:var(--expense)"></b>Expenses</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view="settings" id="view-settings">
+      <div class="card" style="max-width:480px">
+        <h3 style="margin-bottom:4px">Profile</h3>
+        <label for="setName">Display name</label><input class="fi" id="setName" placeholder="Hard K.">
+        <label for="setInitials">Avatar initials</label><input class="fi" id="setInitials" maxlength="2" placeholder="HK">
+        <label for="setCurrency">Currency</label>
+        <select class="fi" id="setCurrency" disabled>
+          <option>AUD — Australian Dollar</option>
+        </select>
+        <button class="save" id="setSave">Save changes</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="scrim" id="scrim"><div id="modalRoot"></div></div>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <noscript>
+    <div style="padding:24px;font-family:sans-serif">Roost needs JavaScript enabled to run.</div>
+  </noscript>
+
+  <script src="script.js"></script>
+</body>
+</html>
