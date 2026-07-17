@@ -10,6 +10,10 @@
  *   render*   View. Paints the DOM from `state`. Never mutates data.
  *   handlers  Controller. Mutate through Store, then refresh() and repaint.
  *
+ * The sidebar switches between six views (Overview/Properties/Income/
+ * Expenses/Reports/Settings) via switchView() — all views repaint from the
+ * same `state` on every paint(), so whichever one is visible is always current.
+ *
  * Data flow:  user action → Store.mutate() → refresh() → Store.get() → paint()
  * ──────────────────────────────────────────────────────────────────────────
  */
@@ -94,6 +98,16 @@ const Store = {
     if (error) throw error;
     return fromPropertyRow(data);
   },
+  async updateProperty(id, patch) {
+    const { data, error } = await sb.from("properties").update(toPropertyRow(patch)).eq("id", id).select().single();
+    if (error) throw error;
+    return fromPropertyRow(data);
+  },
+  async deleteProperty(id) {
+    // Expenses cascade via the property_id FK (ON DELETE CASCADE).
+    const { error } = await sb.from("properties").delete().eq("id", id);
+    if (error) throw error;
+  },
   async getExpenses() {
     const { data, error } = await sb.from("expenses").select("*").order("occurred_at", { ascending: false });
     if (error) throw error;
@@ -111,9 +125,25 @@ const Store = {
 };
 
 /* ============================================================
+ * PROFILE — display name/initials shown in the sidebar. No backend
+ * table for this yet, so it's a local device preference (like the
+ * per-week/per-month toggle), persisted to localStorage only.
+ * ========================================================== */
+const PROFILE_KEY = "roost.profile";
+function loadProfile() {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    if (!raw) return { name: "Hard K.", initials: "HK" };
+    return { name: "Hard K.", initials: "HK", ...JSON.parse(raw) };
+  } catch {
+    return { name: "Hard K.", initials: "HK" };
+  }
+}
+
+/* ============================================================
  * APP STATE — latest snapshot for synchronous UI code.
  * ========================================================== */
-const state = { properties: [], expenses: [], view: "month" };
+const state = { properties: [], expenses: [], view: "month", currentView: "overview", profile: loadProfile() };
 
 // Last 6 calendar months, aggregated from real expenses. Income uses the
 // current rent roll for every month since we don't keep historical rent
@@ -173,11 +203,24 @@ async function refresh() {
 
 function paint() {
   renderKpis();
-  renderChart();
-  renderProperties();
+  renderChartAll();
+  renderPropertiesAll();
   renderExpenses();
   renderBreakdown();
+  renderIncome();
+  renderReports();
+  renderFooter();
   syncToggle();
+}
+
+/* ============================================================
+ * VIEW SWITCHING — sidebar nav shows exactly one <section class="view">.
+ * ========================================================== */
+function switchView(view) {
+  state.currentView = view;
+  document.querySelectorAll(".nav[data-view]").forEach((n) => n.classList.toggle("on", n.dataset.view === view));
+  document.querySelectorAll(".view[data-view]").forEach((v) => v.classList.toggle("active", v.dataset.view === view));
+  if (view === "settings") fillSettingsForm();
 }
 
 /* ============================================================
@@ -207,9 +250,9 @@ function kpi(label, val, sub, icon, bg, color) {
   </div>`;
 }
 
-function renderChart() {
-  const maxBar = Math.max(...CHART.map((c) => Math.max(c.inc, c.exp)));
-  $("chart").innerHTML = CHART.map((c) => `
+function chartBars() {
+  const maxBar = Math.max(1, ...CHART.map((c) => Math.max(c.inc, c.exp)));
+  return CHART.map((c) => `
     <div class="col">
       <div class="bars">
         <div class="bar inc" style="height:${(c.inc / maxBar) * 100}%" title="Income ${AUD(c.inc)}"></div>
@@ -218,6 +261,39 @@ function renderChart() {
       <div class="m">${c.m}</div>
     </div>`).join("");
 }
+function renderChartAll() {
+  const html = chartBars();
+  $("chart").innerHTML = html;
+  if ($("chartFull")) $("chartFull").innerHTML = html;
+}
+
+function propertyRowHtml(p, { actions = false } = {}) {
+  const inc = propMonthly(p);
+  const ex = expByProp(p.id);
+  const n = inc - ex;
+  const tot = inc + ex || 1;
+  let rentTxt = "—";
+  if (p.status === "rented") {
+    const wk = p.period === "week" ? p.rent : (p.rent * 12) / 52;
+    rentTxt = state.view === "week" ? AUD(wk) + "/wk" : AUD(wkToMonth(wk)) + "/mo";
+  }
+  const label = p.status === "owner" ? "Owner-occ." : p.status.charAt(0).toUpperCase() + p.status.slice(1);
+  return `<div class="prow${actions ? " prow-actions" : ""}">
+    <div>
+      <div class="prop-name">${esc(p.address)}</div>
+      <div class="prop-sub">${esc(p.suburb)}</div>
+      <div class="strip"><div class="si" style="width:${(inc / tot) * 100}%"></div><div class="se" style="width:${(ex / tot) * 100}%"></div></div>
+    </div>
+    <div><span class="pill ${p.status}">${label}</span></div>
+    <div class="mono">${rentTxt}</div>
+    <div class="mono hide-sm" style="color:var(--expense)">${ex ? "-" + AUD(ex) : "—"}</div>
+    <div class="mono ${n >= 0 ? "netpos" : "netneg"}">${AUD(n)}</div>
+    ${actions ? `<div class="prow-btns">
+      <button class="rowbtn edit-prop" data-id="${esc(p.id)}" aria-label="Edit ${esc(p.address)}">✎</button>
+      <button class="rowbtn del-prop" data-id="${esc(p.id)}" aria-label="Delete ${esc(p.address)}">✕</button>
+    </div>` : ""}
+  </div>`;
+}
 
 function renderProperties() {
   const el = $("props");
@@ -225,65 +301,155 @@ function renderProperties() {
     el.innerHTML = `<div class="empty"><span class="em-strong">No properties yet</span>Add your first property to start tracking rent and expenses.</div>`;
     return;
   }
+  el.innerHTML = state.properties.map((p) => propertyRowHtml(p)).join("");
+}
+
+function renderPropertiesFull() {
+  const el = $("propsFull");
+  if (!el) return;
+  if (!state.properties.length) {
+    el.innerHTML = `<div class="empty"><span class="em-strong">No properties yet</span>Add your first property to start tracking rent and expenses.</div>`;
+    return;
+  }
+  el.innerHTML = state.properties.map((p) => propertyRowHtml(p, { actions: true })).join("");
+  el.querySelectorAll(".edit-prop").forEach((b) => {
+    b.onclick = () => {
+      const p = state.properties.find((x) => sameId(x.id, b.dataset.id));
+      if (p) openProperty(p);
+    };
+  });
+  el.querySelectorAll(".del-prop").forEach((b) => {
+    b.onclick = () => {
+      const p = state.properties.find((x) => sameId(x.id, b.dataset.id));
+      if (p && window.confirm(`Delete ${p.address}? This also removes its logged expenses.`)) removeProperty(p.id);
+    };
+  });
+}
+
+function renderPropertiesAll() {
+  renderProperties();
+  renderPropertiesFull();
+}
+
+function renderIncome() {
+  const kpisEl = $("incomeKpis");
+  if (!kpisEl) return;
+  const rented = state.properties.filter((p) => p.status === "rented");
+  const vacant = state.properties.filter((p) => p.status === "vacant");
+  const income = state.properties.reduce((s, p) => s + propMonthly(p), 0);
+  const missed = vacant.reduce((s, p) => s + wkToMonth(p.rent), 0);
+  const per = state.view === "week" ? "/wk" : "/mo";
+  const wk = (m) => AUD((m * 12) / 52);
+
+  kpisEl.innerHTML = [
+    kpi("Total rent income", AUD(income), state.view === "week" ? wk(income) + per : "per month", "↗", "var(--pine-soft)", "var(--income)"),
+    kpi("Tenanted", rented.length, `of ${state.properties.length} properties`, "⌂", "var(--pine-soft)", "var(--pine)"),
+    kpi("Vacant", vacant.length, vacant.length ? `${AUD(missed)}/mo missed` : "fully tenanted", "▾", "#F5E9DF", "var(--expense)"),
+  ].join("");
+
+  const el = $("incomeList");
+  if (!state.properties.length) {
+    el.innerHTML = `<div class="empty"><span class="em-strong">No properties yet</span>Add a property to start tracking rent income.</div>`;
+    return;
+  }
   el.innerHTML = state.properties.map((p) => {
-    const inc = propMonthly(p);
-    const ex = expByProp(p.id);
-    const n = inc - ex;
-    const tot = inc + ex || 1;
-    let rentTxt = "—";
+    let rentTxt = "—", monthlyTxt = "—";
     if (p.status === "rented") {
-      const wk = p.period === "week" ? p.rent : (p.rent * 12) / 52;
-      rentTxt = state.view === "week" ? AUD(wk) + "/wk" : AUD(wkToMonth(wk)) + "/mo";
+      const wkAmt = p.period === "week" ? p.rent : (p.rent * 12) / 52;
+      rentTxt = state.view === "week" ? AUD(wkAmt) + "/wk" : AUD(wkToMonth(wkAmt)) + "/mo";
+      monthlyTxt = AUD(wkToMonth(wkAmt));
     }
     const label = p.status === "owner" ? "Owner-occ." : p.status.charAt(0).toUpperCase() + p.status.slice(1);
-    return `<div class="prow">
-      <div>
-        <div class="prop-name">${esc(p.address)}</div>
-        <div class="prop-sub">${esc(p.suburb)}</div>
-        <div class="strip"><div class="si" style="width:${(inc / tot) * 100}%"></div><div class="se" style="width:${(ex / tot) * 100}%"></div></div>
-      </div>
+    return `<div class="prow prow4">
+      <div><div class="prop-name">${esc(p.address)}</div><div class="prop-sub">${esc(p.suburb)}</div></div>
       <div><span class="pill ${p.status}">${label}</span></div>
       <div class="mono">${rentTxt}</div>
-      <div class="mono hide-sm" style="color:var(--expense)">${ex ? "-" + AUD(ex) : "—"}</div>
-      <div class="mono ${n >= 0 ? "netpos" : "netneg"}">${AUD(n)}</div>
+      <div class="mono ${p.status === "rented" ? "netpos" : ""}">${monthlyTxt}</div>
     </div>`;
   }).join("");
 }
 
-function renderExpenses() {
-  const el = $("exps");
+function expenseRowHtml(e) {
+  const p = state.properties.find((x) => sameId(x.id, e.pid));
+  return `<div class="exp">
+    <div class="cat">${esc(e.cat.slice(0, 2).toUpperCase())}</div>
+    <div class="meta">
+      <div class="t">${esc(e.label)}</div>
+      <div class="s">${p ? esc(p.address) : "—"} · ${esc(e.date)}${e.recurring ? " · recurring" : ""}</div>
+    </div>
+    <div class="mono amt">-${AUD(e.amount)}</div>
+    <button class="del" data-id="${esc(e.id)}" aria-label="Delete expense">✕</button>
+  </div>`;
+}
+
+function renderExpenseList(containerId) {
+  const el = $(containerId);
+  if (!el) return;
   if (!state.expenses.length) {
     el.innerHTML = `<div class="empty"><span class="em-strong">No expenses logged</span>Use “+ Add” or the command bar to record your first expense.</div>`;
     return;
   }
-  el.innerHTML = state.expenses.map((e) => {
-    const p = state.properties.find((x) => sameId(x.id, e.pid));
-    return `<div class="exp">
-      <div class="cat">${esc(e.cat.slice(0, 2).toUpperCase())}</div>
-      <div class="meta">
-        <div class="t">${esc(e.label)}</div>
-        <div class="s">${p ? esc(p.address) : "—"} · ${esc(e.date)}${e.recurring ? " · recurring" : ""}</div>
-      </div>
-      <div class="mono amt">-${AUD(e.amount)}</div>
-      <button class="del" data-id="${esc(e.id)}" aria-label="Delete expense">✕</button>
-    </div>`;
-  }).join("");
+  el.innerHTML = state.expenses.map(expenseRowHtml).join("");
   el.querySelectorAll(".del").forEach((b) => (b.onclick = () => deleteExpense(b.dataset.id)));
 }
 
-function renderBreakdown() {
+function renderExpenses() {
+  renderExpenseList("exps");
+  renderExpenseList("expsFull");
+  if ($("expCount")) $("expCount").textContent = `${state.expenses.length} ${state.expenses.length === 1 ? "entry" : "entries"}`;
+}
+
+function renderBreakdownInto(brkId, totalId) {
+  const brkEl = $(brkId);
+  if (!brkEl) return;
   const { expTotal } = totals();
   const cats = {};
   state.expenses.forEach((e) => (cats[e.cat] = (cats[e.cat] || 0) + e.amount));
   const sorted = Object.entries(cats).sort((a, b) => b[1] - a[1]);
-  $("brk").innerHTML = sorted.length
+  brkEl.innerHTML = sorted.length
     ? sorted.map(([c, a]) => `
         <div class="row">
           <div class="top"><span style="font-weight:600">${esc(c)}</span><span class="mono">${AUD(a)}</span></div>
           <div class="track"><div class="fill" style="width:${(a / expTotal) * 100}%;background:${CAT_COLOR[c] || "#93A29A"}"></div></div>
         </div>`).join("")
     : `<div class="empty">Nothing spent yet this month.</div>`;
-  $("totalOut").textContent = "-" + AUD(expTotal);
+  const totalEl = $(totalId);
+  if (totalEl) totalEl.textContent = "-" + AUD(expTotal);
+}
+
+function renderBreakdown() {
+  renderBreakdownInto("brk", "totalOut");
+  renderBreakdownInto("brkFull", "totalOutFull");
+}
+
+function renderReports() {
+  const el = $("reportsKpis");
+  if (!el) return;
+  const avgInc = CHART.length ? CHART.reduce((s, c) => s + c.inc, 0) / CHART.length : 0;
+  const avgExp = CHART.length ? CHART.reduce((s, c) => s + c.exp, 0) / CHART.length : 0;
+  const rented = state.properties.filter((p) => p.status === "rented").length;
+  const occRate = state.properties.length ? Math.round((rented / state.properties.length) * 100) : 0;
+  el.innerHTML = [
+    kpi("Avg. monthly income", AUD(avgInc), "last 6 months", "↗", "var(--pine-soft)", "var(--income)"),
+    kpi("Avg. monthly expenses", AUD(avgExp), "last 6 months", "▾", "#F5E9DF", "var(--expense)"),
+    kpi("Avg. net cashflow", AUD(avgInc - avgExp), "last 6 months", "✦", "var(--amber-soft)", "var(--amber)"),
+    kpi("Occupancy rate", occRate + "%", `${rented} of ${state.properties.length} rented`, "⌂", "var(--pine-soft)", "var(--pine)"),
+  ].join("");
+}
+
+function renderFooter() {
+  if ($("avt")) $("avt").textContent = state.profile.initials || "—";
+  if ($("footName")) $("footName").textContent = state.profile.name || "—";
+  if ($("footCount")) {
+    const n = state.properties.length;
+    $("footCount").textContent = `${n} propert${n === 1 ? "y" : "ies"}`;
+  }
+}
+
+function fillSettingsForm() {
+  if (!$("setName")) return;
+  $("setName").value = state.profile.name || "";
+  $("setInitials").value = state.profile.initials || "";
 }
 
 function syncToggle() {
@@ -302,6 +468,28 @@ async function saveProperty(p) {
   } catch (err) {
     console.error(err);
     toast("Couldn't save the property.", "error");
+  }
+}
+
+async function updatePropertyHandler(id, patch) {
+  try {
+    await Store.updateProperty(id, patch);
+    await refresh();
+    toast("Property updated", "ok");
+  } catch (err) {
+    console.error(err);
+    toast("Couldn't update the property.", "error");
+  }
+}
+
+async function removeProperty(id) {
+  try {
+    await Store.deleteProperty(id);
+    await refresh();
+    toast("Property removed", "ok");
+  } catch (err) {
+    console.error(err);
+    toast("Couldn't remove the property.", "error");
   }
 }
 
@@ -327,6 +515,20 @@ async function deleteExpense(id) {
   }
 }
 
+function saveProfile() {
+  const name = $("setName").value.trim() || "Hard K.";
+  const initials = ($("setInitials").value.trim().toUpperCase().slice(0, 2)) || "HK";
+  state.profile = { name, initials };
+  try {
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(state.profile));
+  } catch (err) {
+    console.error(err);
+  }
+  renderFooter();
+  fillSettingsForm();
+  toast("Settings saved", "ok");
+}
+
 function setView(v) {
   state.view = v;
   paint(); // no data change — repaint only
@@ -344,21 +546,25 @@ function closeModal() {
 }
 scrim.onclick = (e) => { if (e.target === scrim) closeModal(); };
 
-function openProperty() {
-  modalRoot.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="Add property">
-    <div class="mh"><h2 class="disp">Add property</h2><button class="close" id="mClose" aria-label="Close">✕</button></div>
-    <label for="pAddr">Street address</label><input class="fi" id="pAddr" placeholder="42 Marine Parade">
-    <label for="pSub">Suburb / state</label><input class="fi" id="pSub" placeholder="St Kilda VIC">
+function openProperty(prefill = null) {
+  const editing = !!(prefill && prefill.id != null);
+  modalRoot.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="${editing ? "Edit property" : "Add property"}">
+    <div class="mh"><h2 class="disp">${editing ? "Edit property" : "Add property"}</h2><button class="close" id="mClose" aria-label="Close">✕</button></div>
+    <label for="pAddr">Street address</label><input class="fi" id="pAddr" placeholder="42 Marine Parade" value="${editing ? esc(prefill.address) : ""}">
+    <label for="pSub">Suburb / state</label><input class="fi" id="pSub" placeholder="St Kilda VIC" value="${editing ? esc(prefill.suburb) : ""}">
     <div class="r2">
       <div><label for="pStatus">Status</label><select class="fi" id="pStatus">
-        <option value="rented">Rented</option><option value="vacant">Vacant</option><option value="owner">Owner-occupied</option>
+        <option value="rented" ${editing && prefill.status === "rented" ? "selected" : ""}>Rented</option>
+        <option value="vacant" ${editing && prefill.status === "vacant" ? "selected" : ""}>Vacant</option>
+        <option value="owner" ${editing && prefill.status === "owner" ? "selected" : ""}>Owner-occupied</option>
       </select></div>
       <div><label for="pPeriod">Rent period</label><select class="fi" id="pPeriod">
-        <option value="week">Per week</option><option value="month">Per month</option>
+        <option value="week" ${!editing || prefill.period !== "month" ? "selected" : ""}>Per week</option>
+        <option value="month" ${editing && prefill.period === "month" ? "selected" : ""}>Per month</option>
       </select></div>
     </div>
-    <label for="pRent">Rent amount (AUD)</label><input class="fi mono" id="pRent" type="number" min="0" placeholder="650">
-    <button class="save" id="pSave">Save property</button>
+    <label for="pRent">Rent amount (AUD)</label><input class="fi mono" id="pRent" type="number" min="0" placeholder="650" value="${editing ? prefill.rent : ""}" ${editing && prefill.status === "owner" ? "disabled" : ""}>
+    <button class="save" id="pSave">${editing ? "Save changes" : "Save property"}</button>
   </div>`;
   scrim.classList.add("show");
   $("mClose").onclick = closeModal;
@@ -367,13 +573,15 @@ function openProperty() {
   $("pSave").onclick = () => {
     const address = $("pAddr").value.trim();
     if (!address) { $("pAddr").focus(); return; }
-    saveProperty({
+    const payload = {
       address,
       suburb: $("pSub").value.trim() || "—",
       status: $("pStatus").value,
       period: $("pPeriod").value,
       rent: Math.max(0, Number($("pRent").value) || 0),
-    });
+    };
+    if (editing) updatePropertyHandler(prefill.id, payload);
+    else saveProperty(payload);
     closeModal();
   };
 }
@@ -484,11 +692,22 @@ function toast(msg, type = "") {
 async function init() {
   $("aiGo").onclick = runAI;
   $("aiInput").addEventListener("keydown", (e) => { if (e.key === "Enter") runAI(); });
-  $("addProp").onclick = openProperty;
+  $("addProp").onclick = () => openProperty();
   $("addExp").onclick = () => openExpense();
+  if ($("addPropView")) $("addPropView").onclick = () => openProperty();
+  if ($("addExpView")) $("addExpView").onclick = () => openExpense();
+  if ($("setSave")) $("setSave").onclick = saveProfile;
   $("segWeek").onclick = () => setView("week");
   $("segMonth").onclick = () => setView("month");
+  document.querySelectorAll(".nav[data-view]").forEach((n) => {
+    n.onclick = () => switchView(n.dataset.view);
+    n.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); switchView(n.dataset.view); }
+    });
+  });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+
+  renderFooter();
 
   try {
     await ensureSession();
