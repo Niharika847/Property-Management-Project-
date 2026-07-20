@@ -1,3 +1,10 @@
 .vercel
 .env*
 .claude/
+
+# Roost app
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts

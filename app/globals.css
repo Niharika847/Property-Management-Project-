@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+/* ── Perch design tokens (design spec §6) ─────────────────────────────
+   Theme is token-level: light values on :root, dark overrides via
+   [data-theme="dark"] stamped on <html> before paint (see layout). */
+:root {
+  --bg: #fafaf8;
+  --card: #ffffff;
+  --ink: #1b231f;
+  --muted: #5e6b64;
+  --line: #e3e6e1;
+  --brand: #17705a;
+  --brand-ink: #0e4a3b;
+  --brand-soft: #e4f0eb;
+  --warn: #b07a2e;
+  --warn-soft: #f6eddd;
+  --danger: #a8442f;
+  --danger-soft: #f4e3de;
+}
+[data-theme="dark"] {
+  --bg: #121715;
+  --card: #191f1c;
+  --ink: #e6ebe7;
+  --muted: #93a099;
+  --line: #273129;
+  --brand: #46c39a;
+  --brand-ink: #7dd6b8;
+  --brand-soft: #1c312a;
+  --warn: #d3a15a;
+  --warn-soft: #33291a;
+  --danger: #d07b62;
+  --danger-soft: #3a231c;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --font-sans: "Avenir Next", "Seravek", "Segoe UI", system-ui, sans-serif;
+  --radius-card: 12px;
+  --radius-field: 8px;
+}
+
+html {
+  background: var(--bg);
+}
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
