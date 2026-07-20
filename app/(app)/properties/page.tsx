@@ -1,19 +1,23 @@
-import { PageHeader } from "@/components/ui/page-header";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Building2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { PropertiesView } from "@/components/properties/properties-view";
+import type { Lease, Property } from "@/lib/types";
 
-export default function PropertiesPage() {
+export default async function PropertiesPage() {
+  const supabase = await createClient();
+  const [{ data: properties }, { data: leases }] = await Promise.all([
+    supabase.from("properties").select("*").order("created_at"),
+    supabase.from("leases").select("*").eq("status", "active"),
+  ]);
+
+  const leasesByProperty: Record<string, Lease> = {};
+  for (const lease of (leases ?? []) as Lease[]) {
+    leasesByProperty[lease.property_id] = lease;
+  }
+
   return (
-    <>
-      <PageHeader
-        title="Properties"
-        subtitle="Every property you own, with its status, rent, and performance."
-      />
-      <EmptyState
-        icon={Building2}
-        title="No properties yet"
-        body="Add a property to start tracking its income, expenses, and value. Property creation arrives in the next build phase."
-      />
-    </>
+    <PropertiesView
+      properties={(properties ?? []) as Property[]}
+      leasesByProperty={leasesByProperty}
+    />
   );
 }
