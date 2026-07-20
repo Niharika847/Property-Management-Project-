@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { ensureWorkspace } from "@/lib/workspace";
 import { Sidebar } from "@/components/shell/sidebar";
-import { Topbar } from "@/components/shell/topbar";
 import { redirect } from "next/navigation";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -11,14 +10,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const workspace = await ensureWorkspace(supabase, user);
+  await ensureWorkspace(supabase, user);
+  const { count } = await supabase
+    .from("properties")
+    .select("id", { count: "exact", head: true });
 
   return (
     <div className="flex min-h-dvh bg-bg">
-      <Sidebar workspaceName={workspace?.name ?? "My Portfolio"} />
+      <Sidebar email={user.email ?? ""} propertyCount={count ?? 0} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar email={user.email ?? ""} />
-        <main className="mx-auto w-full max-w-6xl flex-1 p-4 md:p-8">{children}</main>
+        <main className="mx-auto w-full max-w-[1400px] flex-1 p-4 md:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );

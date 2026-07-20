@@ -1,58 +1,134 @@
 @import "tailwindcss";
 
-/* ── Perch design tokens (design spec §6) ─────────────────────────────
-   Theme is token-level: light values on :root, dark overrides via
-   [data-theme="dark"] stamped on <html> before paint (see layout). */
+/* ── Perch design tokens · "Homestead" palette (matches the Roost mockup) ──
+   Warm cream canvas, forest-green sidebar, terracotta for money-out.
+   Theme is token-level: light on :root, dark overrides via [data-theme].   */
 :root {
-  --bg: #fafaf8;
+  --bg: #efece1;
   --card: #ffffff;
-  --ink: #1b231f;
-  --muted: #5e6b64;
-  --line: #e3e6e1;
-  --brand: #17705a;
-  --brand-ink: #0e4a3b;
-  --brand-soft: #e4f0eb;
-  --warn: #b07a2e;
-  --warn-soft: #f6eddd;
-  --danger: #a8442f;
-  --danger-soft: #f4e3de;
+  --card-2: #faf8f1;
+  --ink: #23291f;
+  --muted: #7c8173;
+  --line: #e5e0d2;
+  --brand: #2f5d42;
+  --brand-ink: #244a35;
+  --brand-soft: #e3ebe2;
+  --terra: #bd7d50;
+  --terra-soft: #efe2d3;
+  --amber: #d3993f;
+  --danger: #b4553a;
+  --danger-soft: #f1ddd4;
+  --code-bg: #f2efe6;
+
+  /* Sidebar — its own world, only lightly theme-reactive */
+  --side-bg: #3a5742;
+  --side-ink: #eef1ea;
+  --side-muted: #9aac9d;
+  --side-line: #47654f;
+  --side-active: #47664f;
+  --side-active-ink: #ffffff;
 }
-[data-theme="dark"] {
-  --bg: #121715;
-  --card: #191f1c;
-  --ink: #e6ebe7;
-  --muted: #93a099;
-  --line: #273129;
-  --brand: #46c39a;
-  --brand-ink: #7dd6b8;
-  --brand-soft: #1c312a;
-  --warn: #d3a15a;
-  --warn-soft: #33291a;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14170f;
+    --card: #1f231a;
+    --card-2: #262b20;
+    --ink: #e8ebe1;
+    --muted: #939784;
+    --line: #2c3126;
+    --brand: #5fae82;
+    --brand-ink: #7dc79a;
+    --brand-soft: #21301f;
+    --terra: #cf9366;
+    --terra-soft: #33251a;
+    --amber: #d3993f;
+    --danger: #d07b62;
+    --danger-soft: #34201a;
+    --code-bg: #23281d;
+    --side-bg: #1e2f22;
+    --side-ink: #e6ece4;
+    --side-muted: #7f9483;
+    --side-line: #2d4433;
+    --side-active: #2f4a37;
+    --side-active-ink: #ffffff;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14170f;
+  --card: #1f231a;
+  --card-2: #262b20;
+  --ink: #e8ebe1;
+  --muted: #939784;
+  --line: #2c3126;
+  --brand: #5fae82;
+  --brand-ink: #7dc79a;
+  --brand-soft: #21301f;
+  --terra: #cf9366;
+  --terra-soft: #33251a;
+  --amber: #d3993f;
   --danger: #d07b62;
-  --danger-soft: #3a231c;
+  --danger-soft: #34201a;
+  --code-bg: #23281d;
+  --side-bg: #1e2f22;
+  --side-ink: #e6ece4;
+  --side-muted: #7f9483;
+  --side-line: #2d4433;
+  --side-active: #2f4a37;
+  --side-active-ink: #ffffff;
+}
+:root[data-theme="light"] {
+  --bg: #efece1;
+  --card: #ffffff;
+  --card-2: #faf8f1;
+  --ink: #23291f;
+  --muted: #7c8173;
+  --line: #e5e0d2;
+  --brand: #2f5d42;
+  --brand-ink: #244a35;
+  --brand-soft: #e3ebe2;
+  --terra: #bd7d50;
+  --terra-soft: #efe2d3;
+  --amber: #d3993f;
+  --danger: #b4553a;
+  --danger-soft: #f1ddd4;
+  --code-bg: #f2efe6;
+  --side-bg: #3a5742;
+  --side-ink: #eef1ea;
+  --side-muted: #9aac9d;
+  --side-line: #47654f;
+  --side-active: #47664f;
+  --side-active-ink: #ffffff;
 }
 
 @theme inline {
   --color-bg: var(--bg);
   --color-card: var(--card);
+  --color-card-2: var(--card-2);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
   --color-brand-soft: var(--brand-soft);
-  --color-warn: var(--warn);
-  --color-warn-soft: var(--warn-soft);
+  --color-terra: var(--terra);
+  --color-terra-soft: var(--terra-soft);
+  --color-amber: var(--amber);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
+  --color-side-bg: var(--side-bg);
+  --color-side-ink: var(--side-ink);
+  --color-side-muted: var(--side-muted);
+  --color-side-line: var(--side-line);
+  --color-side-active: var(--side-active);
+  --color-side-active-ink: var(--side-active-ink);
   --font-sans: "Avenir Next", "Seravek", "Segoe UI", system-ui, sans-serif;
-  --radius-card: 12px;
-  --radius-field: 8px;
+  --font-serif: "Charter", "Iowan Old Style", "Palatino", Georgia, serif;
+  --font-mono: "SF Mono", ui-monospace, "Cascadia Mono", Menlo, monospace;
+  --radius-card: 16px;
+  --radius-field: 10px;
 }
 
-html {
-  background: var(--bg);
-}
+html { background: var(--bg); }
 body {
   background: var(--bg);
   color: var(--ink);
@@ -61,8 +137,11 @@ body {
 }
 
 .tabular { font-variant-numeric: tabular-nums; }
+.wordmark { font-family: var(--font-serif); }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 
-:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 2px;
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .card-hover { transition: border-color 160ms ease, transform 160ms ease; }
 }

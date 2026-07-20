@@ -6,7 +6,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <span className="text-3xl" aria-hidden>
             🪺
           </span>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink">Roost</h1>
+          <h1 className="wordmark mt-2 text-3xl font-bold tracking-tight text-ink">Roost</h1>
           <p className="mt-1 text-sm text-muted">Property finances that organize themselves</p>
         </div>
         <div className="rounded-(--radius-card) border border-line bg-card p-6 shadow-sm">
