@@ -36,10 +36,27 @@ export async function createExpense(form: FormData): Promise<ActionResult> {
   const invalid = validate(fields);
   if (invalid) return fail(invalid);
 
-  const { error } = await ctx.supabase
+  const documentId = str(form, "document_id") || null;
+
+  const { data: expense, error } = await ctx.supabase
     .from("expenses")
-    .insert({ ...fields, workspace_id: ctx.workspace.id });
-  if (error) return fail(error.message);
+    .insert({
+      ...fields,
+      workspace_id: ctx.workspace.id,
+      source: documentId ? "receipt_ai" : "manual",
+    })
+    .select("id")
+    .single();
+  if (error || !expense) return fail(error?.message ?? "Couldn't save the expense.");
+
+  // Link the source receipt to the expense it produced.
+  if (documentId) {
+    await ctx.supabase
+      .from("documents")
+      .update({ expense_id: expense.id, property_id: fields.property_id })
+      .eq("id", documentId);
+    revalidatePath("/documents");
+  }
 
   revalidatePath("/expenses");
   revalidatePath("/dashboard");

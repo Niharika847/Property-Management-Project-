@@ -70,6 +70,22 @@ export interface RentCharge {
   } | null;
 }
 
+export interface DocumentRow {
+  id: string;
+  file_name: string;
+  type: string;
+  ocr_status: "pending" | "processing" | "done" | "failed";
+  extracted: {
+    vendor?: string | null;
+    amount?: number | null;
+    date?: string | null;
+    confidence?: number | null;
+  } | null;
+  expense_id: string | null;
+  created_at: string;
+  properties?: { address: string } | null;
+}
+
 export interface Income {
   id: string;
   property_id: string;

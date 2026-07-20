@@ -8,8 +8,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { createExpense, updateExpense } from "@/app/(app)/expenses/actions";
 import { todayISO } from "@/lib/format";
 import type { Category, Expense, Property } from "@/lib/types";
+import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+
+export interface ExpensePrefill {
+  property_id?: string | null;
+  date?: string | null;
+  amount?: number | null;
+  gst_amount?: number | null;
+  category_id?: string | null;
+  vendor?: string | null;
+  description?: string | null;
+}
 
 export function ExpenseFormSheet({
   open,
@@ -17,15 +28,22 @@ export function ExpenseFormSheet({
   properties,
   categories,
   expense,
+  initial,
+  documentId,
+  aiConfidence,
 }: {
   open: boolean;
   onClose: () => void;
   properties: Pick<Property, "id" | "address">[];
   categories: Category[];
   expense?: Expense;
+  initial?: ExpensePrefill;
+  documentId?: string;
+  aiConfidence?: number | null;
 }) {
   const router = useRouter();
   const editing = !!expense;
+  const src = expense ?? initial;
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const amountRef = useRef<HTMLInputElement>(null);
@@ -61,13 +79,27 @@ export function ExpenseFormSheet({
     router.refresh();
   }
 
+  const title = editing ? "Edit expense" : documentId ? "Review expense" : "Add expense";
+
   return (
-    <Sheet open={open} onClose={onClose} title={editing ? "Edit expense" : "Add expense"}>
+    <Sheet open={open} onClose={onClose} title={title}>
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
+        {documentId && (
+          <div className="flex items-start gap-2 rounded-(--radius-field) border border-brand/30 bg-brand-soft px-3 py-2.5 text-xs text-brand">
+            <Sparkles className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>
+              Extracted from your receipt by AI
+              {aiConfidence != null ? ` · ${Math.round(aiConfidence * 100)}% confident` : ""}. Check
+              the details before filing.
+            </span>
+          </div>
+        )}
+        {documentId && <input type="hidden" name="document_id" value={documentId} />}
+
         <Select
           label="Property"
           name="property_id"
-          defaultValue={expense?.property_id ?? properties[0]?.id}
+          defaultValue={src?.property_id ?? properties[0]?.id}
           required
         >
           {properties.map((p) => (
@@ -81,13 +113,13 @@ export function ExpenseFormSheet({
             label="Date"
             name="date"
             type="date"
-            defaultValue={expense?.date ?? todayISO()}
+            defaultValue={src?.date ?? todayISO()}
             required
           />
           <Select
             label="Category"
             name="category_id"
-            defaultValue={expense?.category_id}
+            defaultValue={src?.category_id ?? undefined}
             onChange={(e) => onCategoryChange(e.target.value)}
             required
           >
@@ -104,7 +136,7 @@ export function ExpenseFormSheet({
             label="Amount ($, incl. GST)"
             name="amount"
             inputMode="decimal"
-            defaultValue={expense?.amount ?? ""}
+            defaultValue={src?.amount ?? ""}
             required
           />
           <div className="relative">
@@ -113,7 +145,7 @@ export function ExpenseFormSheet({
               label="GST ($)"
               name="gst_amount"
               inputMode="decimal"
-              defaultValue={expense?.gst_amount ?? ""}
+              defaultValue={src?.gst_amount ?? ""}
             />
             <button
               type="button"
@@ -127,13 +159,13 @@ export function ExpenseFormSheet({
         <Input
           label="Vendor"
           name="vendor"
-          defaultValue={expense?.vendor ?? ""}
+          defaultValue={src?.vendor ?? ""}
           placeholder="e.g. Reece Plumbing"
         />
         <Input
           label="Description"
           name="description"
-          defaultValue={expense?.description ?? ""}
+          defaultValue={src?.description ?? ""}
           placeholder="What was this for?"
           required
         />
@@ -162,7 +194,7 @@ export function ExpenseFormSheet({
         {error && <p className="text-sm text-danger">{error}</p>}
         <div className="flex gap-2 pt-2">
           <Button type="submit" loading={saving} className="flex-1">
-            {editing ? "Save changes" : "Add expense"}
+            {editing ? "Save changes" : documentId ? "File expense" : "Add expense"}
           </Button>
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
