@@ -9,6 +9,16 @@ const VISION_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gi
 export const aiConfigured = () => !!process.env.ANTHROPIC_API_KEY;
 export const isVisionType = (mime: string | null) => !!mime && VISION_TYPES.has(mime);
 
+/** Turns raw SDK/API errors into something a user can act on. */
+export function friendlyAiError(e: unknown): string {
+  const status = (e as { status?: number })?.status;
+  if (status === 401)
+    return "Your Anthropic API key was rejected. Check ANTHROPIC_API_KEY in .env.local — it may have a duplicated 'sk-ant-' prefix — then restart the dev server.";
+  if (status === 429) return "The AI is rate-limited right now — wait a moment and try again.";
+  if (status === 529) return "The AI is temporarily overloaded — try again shortly.";
+  return e instanceof Error ? e.message : "The AI hit an error.";
+}
+
 export interface ReceiptExtraction {
   vendor: string | null;
   date: string | null; // ISO yyyy-mm-dd

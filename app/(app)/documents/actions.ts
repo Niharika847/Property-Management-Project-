@@ -2,7 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { actionContext, fail, ok, type ActionResult } from "@/lib/action-helpers";
-import { aiConfigured, isVisionType, extractReceipt, type ReceiptExtraction } from "@/lib/anthropic";
+import {
+  aiConfigured,
+  isVisionType,
+  extractReceipt,
+  friendlyAiError,
+  type ReceiptExtraction,
+} from "@/lib/anthropic";
 
 export interface IngestResult {
   documentId: string;
@@ -93,7 +99,7 @@ export async function ingestReceipt(input: {
       data: {
         documentId: doc.id,
         extraction: null,
-        message: e instanceof Error ? e.message : "AI couldn't read this receipt — enter it manually.",
+        message: friendlyAiError(e),
       },
     };
   }
