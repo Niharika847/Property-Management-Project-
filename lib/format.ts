@@ -72,3 +72,34 @@ export const PROPERTY_TYPES = [
 ] as const;
 
 export const AU_STATES = ["NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"] as const;
+
+export const REPORT_PERIODS = [
+  { value: "this_fy", label: "This financial year" },
+  { value: "last_fy", label: "Last financial year" },
+  { value: "this_month", label: "This month" },
+  { value: "all", label: "All time" },
+] as const;
+
+/** Resolve a report period key into a concrete date range + human label. */
+export function resolvePeriod(period?: string): { start: string; end: string; label: string } {
+  const now = new Date();
+  switch (period) {
+    case "this_month":
+      return {
+        ...monthRange(now),
+        label: now.toLocaleDateString("en-AU", { month: "long", year: "numeric" }),
+      };
+    case "last_fy": {
+      const d = new Date(now.getFullYear() - 1, now.getMonth(), 1);
+      const r = fyRange(d);
+      return { start: r.start, end: r.end, label: r.label };
+    }
+    case "all":
+      return { start: "1900-01-01", end: "2999-12-31", label: "All time" };
+    case "this_fy":
+    default: {
+      const r = fyRange(now);
+      return { start: r.start, end: r.end, label: r.label };
+    }
+  }
+}

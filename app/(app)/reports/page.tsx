@@ -1,19 +1,13 @@
-import { PageHeader } from "@/components/ui/page-header";
-import { EmptyState } from "@/components/ui/empty-state";
-import { FileBarChart } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { ReportsView } from "@/components/reports/reports-view";
+import type { Property } from "@/lib/types";
 
-export default function ReportsPage() {
-  return (
-    <>
-      <PageHeader
-        title="Reports"
-        subtitle="Monthly, annual, tax, and portfolio reports — PDF, Excel, or CSV."
-      />
-      <EmptyState
-        icon={FileBarChart}
-        title="No reports yet"
-        body="Reports generate from your ledger, so they unlock once income and expenses are being tracked."
-      />
-    </>
-  );
+export default async function ReportsPage() {
+  const supabase = await createClient();
+  const { data: properties } = await supabase
+    .from("properties")
+    .select("id, address")
+    .order("address");
+
+  return <ReportsView properties={(properties ?? []) as Pick<Property, "id" | "address">[]} />;
 }
