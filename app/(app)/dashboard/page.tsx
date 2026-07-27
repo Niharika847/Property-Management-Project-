@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AskBar } from "@/components/dashboard/ask-bar";
 import { PeriodToggle } from "@/components/dashboard/period-toggle";
 import { CashflowChart, type MonthPoint } from "@/components/dashboard/cashflow-chart";
+import { SeedButton } from "@/components/dashboard/seed-button";
 import { StatusPill } from "@/components/ui/status-pill";
 import {
   aud,
@@ -207,11 +208,21 @@ export default async function DashboardPage({
             <span className="text-xs text-muted">rent &amp; net per property</span>
           </div>
           {propertyRows.length === 0 ? (
-            <div className="py-12 text-center">
-              <p className="font-semibold text-ink">No properties yet</p>
-              <p className="mt-1 text-sm text-muted">
-                Add your first property to start tracking rent and expenses.
-              </p>
+            <div className="flex flex-col items-center gap-4 py-10 text-center">
+              <div>
+                <p className="font-semibold text-ink">No properties yet</p>
+                <p className="mt-1 text-sm text-muted">
+                  Add your first property to start tracking rent and expenses.
+                </p>
+              </div>
+              <Link
+                href="/properties"
+                className="rounded-(--radius-field) bg-brand px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+              >
+                Add a property
+              </Link>
+              <span className="text-xs text-muted">or, to see how Roost works</span>
+              <SeedButton />
             </div>
           ) : (
             <table className="w-full text-sm">
