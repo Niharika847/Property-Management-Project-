@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { ensureWorkspace } from "@/lib/workspace";
 import { Sidebar } from "@/components/shell/sidebar";
+import { CommandPalette } from "@/components/search/command-palette";
 import { redirect } from "next/navigation";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -15,12 +16,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .from("properties")
     .select("id", { count: "exact", head: true });
 
+  const fullName = (user.user_metadata?.full_name as string | undefined) ?? undefined;
+
   return (
     <div className="flex min-h-dvh bg-bg">
-      <Sidebar email={user.email ?? ""} propertyCount={count ?? 0} />
+      <Sidebar email={user.email ?? ""} name={fullName} propertyCount={count ?? 0} />
       <div className="flex min-w-0 flex-1 flex-col">
         <main className="mx-auto w-full max-w-[1400px] flex-1 p-4 md:p-6 lg:p-8">{children}</main>
       </div>
+      <CommandPalette />
     </div>
   );
 }

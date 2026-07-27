@@ -14,13 +14,21 @@ function nameFromEmail(email: string): string {
     .join(" ");
 }
 
-export function UserCard({ email, propertyCount }: { email: string; propertyCount: number }) {
+export function UserCard({
+  email,
+  name: nameProp,
+  propertyCount,
+}: {
+  email: string;
+  name?: string;
+  propertyCount: number;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState("light");
   const ref = useRef<HTMLDivElement>(null);
 
-  const name = nameFromEmail(email);
+  const name = nameProp && nameProp.trim() ? nameProp.trim() : nameFromEmail(email);
   const initials =
     name
       .split(" ")

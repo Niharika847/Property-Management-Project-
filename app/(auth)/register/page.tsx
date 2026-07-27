@@ -19,14 +19,22 @@ export default function RegisterPage() {
     setLoading(true);
     setError(null);
     const form = new FormData(e.currentTarget);
+    const fullName = String(form.get("full_name") ?? "").trim();
     const supabase = createClient();
     const { data, error } = await supabase.auth.signUp({
-      email: String(form.get("email")),
+      email: String(form.get("email")).trim(),
       password: String(form.get("password")),
-      options: { emailRedirectTo: `${location.origin}/auth/callback?next=/dashboard` },
+      options: {
+        data: { full_name: fullName },
+        emailRedirectTo: `${location.origin}/auth/callback?next=/dashboard`,
+      },
     });
     if (error) {
-      setError(error.message);
+      setError(
+        error.message.includes("already registered")
+          ? "That email already has an account — log in instead, or reset your password."
+          : error.message
+      );
       setLoading(false);
       return;
     }
@@ -58,15 +66,19 @@ export default function RegisterPage() {
         <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
       </div>
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
+        <Input label="Full name" name="full_name" autoComplete="name" placeholder="Niharika Singh" required />
         <Input label="Email" name="email" type="email" autoComplete="email" required />
-        <Input
-          label="Password"
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          minLength={8}
-          required
-        />
+        <div>
+          <Input
+            label="Password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            minLength={8}
+            required
+          />
+          <p className="mt-1 text-xs text-muted">At least 8 characters.</p>
+        </div>
         {error && <p className="text-sm text-danger">{error}</p>}
         <Button type="submit" loading={loading} className="w-full">
           Create account

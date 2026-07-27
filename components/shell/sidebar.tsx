@@ -14,6 +14,7 @@ import {
   Sparkles,
   Bell,
   Settings,
+  Search,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { UserCard } from "./user-card";
@@ -50,7 +51,15 @@ const GROUPS: Group[] = [
   },
 ];
 
-export function Sidebar({ email, propertyCount }: { email: string; propertyCount: number }) {
+export function Sidebar({
+  email,
+  name,
+  propertyCount,
+}: {
+  email: string;
+  name?: string;
+  propertyCount: number;
+}) {
   const pathname = usePathname();
 
   return (
@@ -66,7 +75,17 @@ export function Sidebar({ email, propertyCount }: { email: string; propertyCount
         <span className="wordmark text-2xl font-bold tracking-tight text-side-ink">Roost</span>
       </div>
 
-      <nav className="mt-2 flex flex-1 flex-col gap-6 overflow-y-auto px-1" aria-label="Main">
+      <button
+        type="button"
+        onClick={() => window.dispatchEvent(new Event("roost:open-search"))}
+        className="mx-1 mt-1 flex items-center gap-2.5 rounded-(--radius-field) border border-side-line px-3 py-2 text-sm text-side-muted transition-colors hover:bg-side-active/50 hover:text-side-ink"
+      >
+        <Search className="size-[1.15rem]" aria-hidden />
+        <span className="flex-1 text-left">Search</span>
+        <kbd className="rounded border border-side-line px-1.5 py-0.5 text-[10px]">⌘K</kbd>
+      </button>
+
+      <nav className="mt-4 flex flex-1 flex-col gap-6 overflow-y-auto px-1" aria-label="Main">
         {GROUPS.map((group) => (
           <div key={group.title}>
             <div className="px-3 pb-2 text-[0.7rem] font-semibold tracking-[0.12em] text-side-muted uppercase">
@@ -100,7 +119,7 @@ export function Sidebar({ email, propertyCount }: { email: string; propertyCount
       </nav>
 
       <div className="pt-3">
-        <UserCard email={email} propertyCount={propertyCount} />
+        <UserCard email={email} name={name} propertyCount={propertyCount} />
       </div>
     </aside>
   );
