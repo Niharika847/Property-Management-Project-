@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:security": "node scripts/security-test.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",

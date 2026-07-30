@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { actionContext, fail, ok, type ActionResult } from "@/lib/action-helpers";
-import { WORKSPACE_COOKIE, type Role } from "@/lib/workspace";
+import { WORKSPACE_COOKIE, ROLE_LABEL, type Role } from "@/lib/workspace";
+import { sendInviteEmail } from "@/lib/email";
 
 const APP_PATHS = [
   "/dashboard",
@@ -49,6 +50,15 @@ export async function inviteMember(email: string, role: Role): Promise<ActionRes
         : error.message
     );
   }
+
+  // Best effort: the invite already exists, so a mail failure must not undo it.
+  await sendInviteEmail({
+    to: clean,
+    workspaceName: ctx.workspace.name,
+    roleLabel: ROLE_LABEL[role],
+    inviterName:
+      (ctx.user.user_metadata?.full_name as string | undefined) ?? ctx.user.email ?? "A teammate",
+  });
 
   revalidatePath("/settings");
   return ok();

@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { resetWorkspaceData } from "@/app/(app)/settings/actions";
+import { planFor } from "@/lib/plans";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Download, Check, User, Building2, CreditCard, Database } from "lucide-react";
@@ -14,12 +15,6 @@ export interface PlanUsage {
   documents: number;
 }
 
-const PLAN_LIMITS: Record<string, { label: string; properties: number | null; price: string }> = {
-  free: { label: "Free", properties: 1, price: "$0" },
-  pro: { label: "Pro", properties: 5, price: "$19/mo" },
-  portfolio: { label: "Portfolio", properties: null, price: "$49/mo" },
-  agency: { label: "Agency", properties: null, price: "$129/mo" },
-};
 
 function Section({
   icon: Icon,
@@ -169,7 +164,7 @@ export function SettingsView({
     setTimeout(() => setPwState("idle"), 3000);
   }
 
-  const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
+  const limits = planFor(plan);
   const propertyPct =
     limits.properties == null ? 0 : Math.min(100, (usage.properties / limits.properties) * 100);
   const overLimit = limits.properties != null && usage.properties > limits.properties;

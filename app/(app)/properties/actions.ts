@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { actionContext, fail, ok, str, num, type ActionResult } from "@/lib/action-helpers";
 import { todayISO } from "@/lib/format";
+import { planFor, propertyLimitMessage } from "@/lib/plans";
 
 function propertyFields(form: FormData) {
   return {
@@ -26,8 +27,17 @@ function propertyFields(form: FormData) {
 export async function createProperty(form: FormData): Promise<ActionResult> {
   const ctx = await actionContext();
   if (!ctx) return fail("You're signed out — log in again.");
+  if (!ctx.workspace.canEdit) return fail("You have read-only access to this portfolio.");
   const fields = propertyFields(form);
   if (!fields.address) return fail("Address is required.");
+
+  // Plan limit is enforced server-side, not just hidden in the UI.
+  const [{ data: ws }, { count }] = await Promise.all([
+    ctx.supabase.from("workspaces").select("plan").eq("id", ctx.workspace.id).maybeSingle(),
+    ctx.supabase.from("properties").select("id", { count: "exact", head: true }),
+  ]);
+  const limit = propertyLimitMessage(planFor(ws?.plan as string | undefined), count ?? 0);
+  if (limit) return fail(limit);
 
   const { data: property, error } = await ctx.supabase
     .from("properties")

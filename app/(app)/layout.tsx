@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { ensureWorkspace, listMemberships } from "@/lib/workspace";
 import { Sidebar } from "@/components/shell/sidebar";
+import { MobileNav } from "@/components/shell/mobile-nav";
 import { CommandPalette } from "@/components/search/command-palette";
 import { redirect } from "next/navigation";
 
@@ -29,6 +30,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         activeWorkspaceId={workspace?.id ?? ""}
       />
       <div className="flex min-w-0 flex-1 flex-col">
+        <MobileNav
+          email={user.email ?? ""}
+          name={fullName}
+          propertyCount={count ?? 0}
+          workspaces={memberships.map((w) => ({ id: w.id, name: w.name, role: w.role }))}
+          activeWorkspaceId={workspace?.id ?? ""}
+        />
         <main className="mx-auto w-full max-w-[1400px] flex-1 p-4 md:p-6 lg:p-8">{children}</main>
       </div>
       <CommandPalette />

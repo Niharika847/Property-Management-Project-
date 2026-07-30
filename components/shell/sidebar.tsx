@@ -2,55 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Building2,
-  ArrowDownToLine,
-  ArrowUpFromLine,
-  FileText,
-  FileBarChart,
-  LineChart,
-  Calendar,
-  Sparkles,
-  Bell,
-  Settings,
-  Search,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Search } from "lucide-react";
+import { NAV_GROUPS, isActivePath } from "./nav-items";
 import { UserCard } from "./user-card";
 import { WorkspaceSwitcher, type SwitcherItem } from "./workspace-switcher";
-
-type Item = { href: string; label: string; icon: LucideIcon };
-type Group = { title: string; items: Item[] };
-
-const GROUPS: Group[] = [
-  {
-    title: "Portfolio",
-    items: [
-      { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-      { href: "/properties", label: "Properties", icon: Building2 },
-      { href: "/income", label: "Income", icon: ArrowDownToLine },
-      { href: "/expenses", label: "Expenses", icon: ArrowUpFromLine },
-    ],
-  },
-  {
-    title: "Insights",
-    items: [
-      { href: "/documents", label: "Documents", icon: FileText },
-      { href: "/reports", label: "Reports", icon: FileBarChart },
-      { href: "/analytics", label: "Analytics", icon: LineChart },
-    ],
-  },
-  {
-    title: "Account",
-    items: [
-      { href: "/calendar", label: "Calendar", icon: Calendar },
-      { href: "/assistant", label: "AI Assistant", icon: Sparkles },
-      { href: "/notifications", label: "Notifications", icon: Bell },
-      { href: "/settings", label: "Settings", icon: Settings },
-    ],
-  },
-];
 
 export function Sidebar({
   email,
@@ -93,17 +48,14 @@ export function Sidebar({
       </button>
 
       <nav className="mt-4 flex flex-1 flex-col gap-6 overflow-y-auto px-1" aria-label="Main">
-        {GROUPS.map((group) => (
+        {NAV_GROUPS.map((group) => (
           <div key={group.title}>
             <div className="px-3 pb-2 text-[0.7rem] font-semibold tracking-[0.12em] text-side-muted uppercase">
               {group.title}
             </div>
             <div className="flex flex-col gap-0.5">
               {group.items.map(({ href, label, icon: Icon }) => {
-                const active =
-                  href === "/dashboard"
-                    ? pathname === "/dashboard"
-                    : pathname.startsWith(href);
+                const active = isActivePath(pathname, href);
                 return (
                   <Link
                     key={href}
