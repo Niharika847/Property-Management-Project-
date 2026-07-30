@@ -1,16 +1,18 @@
-import { PageHeader } from "@/components/ui/page-header";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Bell } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { ensureWorkspace } from "@/lib/workspace";
+import { buildAlerts } from "@/lib/alerts";
+import { NotificationsView } from "@/components/notifications/notifications-view";
+import { redirect } from "next/navigation";
 
-export default function NotificationsPage() {
-  return (
-    <>
-      <PageHeader title="Notifications" subtitle="Rent alerts, due bills, and AI insights." />
-      <EmptyState
-        icon={Bell}
-        title="You're all caught up"
-        body="Late rent, upcoming bills, and items needing review will show up here."
-      />
-    </>
-  );
+export default async function NotificationsPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const workspace = await ensureWorkspace(supabase, user);
+  const alerts = workspace ? await buildAlerts(supabase, workspace.id) : [];
+
+  return <NotificationsView alerts={alerts} />;
 }

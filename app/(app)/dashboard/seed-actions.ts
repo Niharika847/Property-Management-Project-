@@ -111,7 +111,7 @@ export async function seedSampleData(): Promise<ActionResult> {
         tenant_id: tenantId("Jordan Blake"),
         rent_amount: 650,
         frequency: "weekly",
-        start_date: iso(monthsAgo(14, 1)),
+        start_date: iso(monthsAgo(6, 1)),
         bond_amount: 2600,
         status: "active",
       },
@@ -121,7 +121,7 @@ export async function seedSampleData(): Promise<ActionResult> {
         tenant_id: tenantId("Priya Raman"),
         rent_amount: 520,
         frequency: "weekly",
-        start_date: iso(monthsAgo(9, 1)),
+        start_date: iso(monthsAgo(6, 1)),
         bond_amount: 2080,
         status: "active",
       },
@@ -132,27 +132,37 @@ export async function seedSampleData(): Promise<ActionResult> {
     await ctx.supabase.rpc("generate_rent_charges", { p_lease_id: l.id });
   }
 
-  // ── Income: 6 months of rent received ─────────────────────────────────
-  const incomeRows: Record<string, unknown>[] = [];
-  for (let m = 5; m >= 0; m--) {
-    incomeRows.push({
-      workspace_id: wid,
-      property_id: marine,
-      type: "rent",
-      date: iso(monthsAgo(m, 3)),
-      amount: 2817,
-      description: "Monthly rent — 42 Marine Parade",
-    });
-    incomeRows.push({
-      workspace_id: wid,
-      property_id: ashwood,
-      type: "rent",
-      date: iso(monthsAgo(m, 5)),
-      amount: 2253,
-      description: "Monthly rent — 18 Ashwood Grove",
-    });
+  // ── Settle rent history: past charges are paid (and produce income rows),
+  //    except the two most recent, which stay outstanding so arrears are real.
+  const today = iso(new Date());
+  for (const l of leases ?? []) {
+    const { data: due } = await ctx.supabase
+      .from("rent_charges")
+      .select("id, due_date, amount")
+      .eq("lease_id", l.id)
+      .lte("due_date", today)
+      .order("due_date");
+    const charges = due ?? [];
+    const toPay = charges.slice(0, Math.max(0, charges.length - 2));
+
+    if (toPay.length === 0) continue;
+    await ctx.supabase
+      .from("rent_charges")
+      .update({ status: "paid" })
+      .in("id", toPay.map((c) => c.id));
+
+    await ctx.supabase.from("income").insert(
+      toPay.map((c) => ({
+        workspace_id: wid,
+        property_id: l.property_id,
+        rent_charge_id: c.id,
+        type: "rent",
+        date: c.due_date,
+        amount: c.amount,
+        description: "Weekly rent received",
+      }))
+    );
   }
-  await ctx.supabase.from("income").insert(incomeRows);
 
   // ── Expenses: spread across categories and months ─────────────────────
   const e = (
