@@ -55,6 +55,10 @@ export function SettingsView({
   currency,
   plan,
   usage,
+  role,
+  canEdit,
+  isOwner,
+  team,
 }: {
   email: string;
   fullName: string;
@@ -62,6 +66,10 @@ export function SettingsView({
   currency: string;
   plan: string;
   usage: PlanUsage;
+  role: string;
+  canEdit: boolean;
+  isOwner: boolean;
+  team?: React.ReactNode;
 }) {
   const router = useRouter();
 
@@ -168,9 +176,14 @@ export function SettingsView({
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">Settings</h1>
-        <p className="mt-1 text-sm text-muted">Your account, workspace, plan and data.</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-ink">Settings</h1>
+          <p className="mt-1 text-sm text-muted">Your account, workspace, team, plan and data.</p>
+        </div>
+        <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-brand">
+          Your role: {role.charAt(0).toUpperCase() + role.slice(1)}
+        </span>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -249,7 +262,8 @@ export function SettingsView({
               <Button
                 type="submit"
                 loading={wsState === "saving"}
-                disabled={!wsName.trim() || wsName === workspaceName}
+                disabled={!canEdit || !wsName.trim() || wsName === workspaceName}
+                title={canEdit ? undefined : "Read-only access"}
               >
                 Save workspace
               </Button>
@@ -315,6 +329,8 @@ export function SettingsView({
           </p>
         </Section>
 
+        {team}
+
         <Section
           icon={Database}
           title="Your data"
@@ -338,6 +354,7 @@ export function SettingsView({
             Your data is yours — exports are plain CSV that opens in Excel or Google Sheets.
           </p>
 
+          {isOwner && (
           <div className="mt-5 rounded-(--radius-field) border border-danger/40 p-4">
             <div className="font-semibold text-ink">Clear all portfolio data</div>
             <p className="mt-1 text-sm text-muted">
@@ -380,6 +397,7 @@ export function SettingsView({
               </div>
             )}
           </div>
+          )}
         </Section>
       </div>
     </div>

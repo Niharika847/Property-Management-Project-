@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { UserCard } from "./user-card";
+import { WorkspaceSwitcher, type SwitcherItem } from "./workspace-switcher";
 
 type Item = { href: string; label: string; icon: LucideIcon };
 type Group = { title: string; items: Item[] };
@@ -55,10 +56,14 @@ export function Sidebar({
   email,
   name,
   propertyCount,
+  workspaces = [],
+  activeWorkspaceId = "",
 }: {
   email: string;
   name?: string;
   propertyCount: number;
+  workspaces?: SwitcherItem[];
+  activeWorkspaceId?: string;
 }) {
   const pathname = usePathname();
 
@@ -74,6 +79,8 @@ export function Sidebar({
         </span>
         <span className="wordmark text-2xl font-bold tracking-tight text-side-ink">Roost</span>
       </div>
+
+      <WorkspaceSwitcher workspaces={workspaces} activeId={activeWorkspaceId} />
 
       <button
         type="button"
