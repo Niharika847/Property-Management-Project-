@@ -1,19 +1,25 @@
-import { PageHeader } from "@/components/ui/page-header";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Calendar } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { ensureWorkspace } from "@/lib/workspace";
+import { buildCalendarEvents, currentMonth } from "@/lib/calendar";
+import { CalendarView } from "@/components/calendar/calendar-view";
+import { redirect } from "next/navigation";
 
-export default function CalendarPage() {
-  return (
-    <>
-      <PageHeader
-        title="Calendar"
-        subtitle="Bills due, lease events, maintenance, and mortgage payments."
-      />
-      <EmptyState
-        icon={Calendar}
-        title="Nothing scheduled"
-        body="Due dates from rent, bills, and leases will populate this calendar automatically."
-      />
-    </>
-  );
+export default async function CalendarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>;
+}) {
+  const { month: monthParam } = await searchParams;
+  const month = /^\d{4}-\d{2}$/.test(monthParam ?? "") ? monthParam! : currentMonth();
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const workspace = await ensureWorkspace(supabase, user);
+  const events = workspace ? await buildCalendarEvents(supabase, workspace.id, month) : [];
+
+  return <CalendarView month={month} events={events} />;
 }
