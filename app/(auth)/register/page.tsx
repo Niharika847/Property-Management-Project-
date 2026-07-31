@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { GoogleButton } from "@/components/auth/google-button";
+import { OAuthSection } from "@/components/auth/oauth-section";
 import { checkEmail } from "@/lib/email-validation";
 import { MailCheck } from "lucide-react";
 import Link from "next/link";
@@ -108,10 +108,7 @@ export default function RegisterPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <GoogleButton />
-      <div className="flex items-center gap-3 text-xs text-muted">
-        <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
-      </div>
+      <OAuthSection />
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <Input label="Full name" name="full_name" autoComplete="name" placeholder="Niharika Singh" required />
         <div>

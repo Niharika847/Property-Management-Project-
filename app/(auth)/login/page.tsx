@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { GoogleButton } from "@/components/auth/google-button";
+import { OAuthSection } from "@/components/auth/oauth-section";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -39,10 +39,7 @@ function LoginForm() {
 
   return (
     <div className="flex flex-col gap-4">
-      <GoogleButton />
-      <div className="flex items-center gap-3 text-xs text-muted">
-        <span className="h-px flex-1 bg-line" /> or <span className="h-px flex-1 bg-line" />
-      </div>
+      <OAuthSection />
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <Input label="Email" name="email" type="email" autoComplete="email" required />
         <Input
