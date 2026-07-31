@@ -79,8 +79,8 @@ export function AssistantChat({ aiOn }: { aiOn: boolean }) {
         <div className="mb-4 flex items-start gap-2 rounded-(--radius-field) border border-warn/40 bg-warn-soft px-3 py-2.5 text-xs text-warn">
           <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
           <span>
-            The assistant is off until an <code className="font-mono">ANTHROPIC_API_KEY</code> is set
-            in <code className="font-mono">.env.local</code> and the dev server restarts.
+            The assistant is off until a <code className="font-mono">Google_gemini_API_KEY</code> is
+            set in <code className="font-mono">.env.local</code> and the dev server restarts.
           </span>
         </div>
       )}

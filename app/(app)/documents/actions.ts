@@ -8,7 +8,7 @@ import {
   extractReceipt,
   friendlyAiError,
   type ReceiptExtraction,
-} from "@/lib/anthropic";
+} from "@/lib/gemini";
 
 export interface IngestResult {
   documentId: string;
@@ -48,7 +48,7 @@ export async function ingestReceipt(input: {
     await ctx.supabase.from("documents").update({ ocr_status: "pending" }).eq("id", doc.id);
     return {
       ok: true,
-      data: { documentId: doc.id, extraction: null, message: "AI reading is off — add ANTHROPIC_API_KEY to enable it. Enter the details manually." },
+      data: { documentId: doc.id, extraction: null, message: "AI reading is off — add Google_gemini_API_KEY to enable it. Enter the details manually." },
     };
   }
   if (!isVisionType(input.mime)) {

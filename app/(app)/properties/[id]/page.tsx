@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import { ensureWorkspace } from "@/lib/workspace";
 import { PropertyActions } from "@/components/properties/property-actions";
 import { LeasePanel } from "@/components/properties/lease-panel";
+import { MortgagePanel, type Mortgage } from "@/components/properties/mortgage-panel";
 import { StatusPill } from "@/components/ui/status-pill";
 import {
   aud,
@@ -24,6 +26,12 @@ export default async function PropertyPage({
   const supabase = await createClient();
   const fy = fyRange();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const workspace = user ? await ensureWorkspace(supabase, user) : null;
+  const canEdit = workspace?.canEdit ?? false;
+
   const { data: property } = await supabase
     .from("properties")
     .select("*")
@@ -32,7 +40,8 @@ export default async function PropertyPage({
   if (!property) notFound();
   const p = property as Property;
 
-  const [{ data: lease }, { data: incomeRows }, { data: expenseRows }] = await Promise.all([
+  const [{ data: lease }, { data: incomeRows }, { data: expenseRows }, { data: mortgage }] =
+    await Promise.all([
     supabase
       .from("leases")
       .select("*, tenants ( full_name )")
@@ -51,6 +60,7 @@ export default async function PropertyPage({
       .eq("property_id", id)
       .gte("date", fy.start)
       .order("date", { ascending: false }),
+    supabase.from("mortgages").select("*").eq("property_id", id).maybeSingle(),
   ]);
 
   const incomeFY = (incomeRows ?? []).reduce((s, r) => s + Number(r.amount), 0);
@@ -140,6 +150,15 @@ export default async function PropertyPage({
         </section>
 
         <LeasePanel propertyId={p.id} lease={activeLease} />
+      </div>
+
+      <div className="mt-4">
+        <MortgagePanel
+          propertyId={p.id}
+          mortgage={(mortgage as Mortgage | null) ?? null}
+          propertyValue={p.current_value}
+          canEdit={canEdit}
+        />
       </div>
 
       <section className="mt-4 rounded-(--radius-card) border border-line bg-card p-5">
