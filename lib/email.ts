@@ -56,6 +56,7 @@ export function sendInviteEmail(opts: {
   workspaceName: string;
   roleLabel: string;
   inviterName: string;
+  inviteId: string;
 }): Promise<SendResult> {
   return send(
     opts.to,
@@ -64,8 +65,8 @@ export function sendInviteEmail(opts: {
       `You've been invited to ${opts.workspaceName}`,
       `<p><strong>${opts.inviterName}</strong> has invited you to join their property portfolio on Roost as
        <strong>${opts.roleLabel}</strong>.</p>
-       <p>Sign in with this email address and you'll find the invitation waiting in Settings.</p>`,
-      { label: "Open Roost", href: `${APP_URL}/settings` }
+       <p>Sign in with this email address to accept.</p>`,
+      { label: "Accept invitation", href: `${APP_URL}/join/${opts.inviteId}` }
     )
   );
 }

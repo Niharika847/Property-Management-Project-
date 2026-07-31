@@ -37,12 +37,16 @@ export async function inviteMember(email: string, role: Role): Promise<ActionRes
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) return fail("Enter a valid email address.");
   if (clean === ctx.user.email?.toLowerCase()) return fail("That's your own address.");
 
-  const { error } = await ctx.supabase.from("workspace_invites").insert({
-    workspace_id: ctx.workspace.id,
-    email: clean,
-    role,
-    invited_by: ctx.user.id,
-  });
+  const { data: invite, error } = await ctx.supabase
+    .from("workspace_invites")
+    .insert({
+      workspace_id: ctx.workspace.id,
+      email: clean,
+      role,
+      invited_by: ctx.user.id,
+    })
+    .select("id")
+    .single();
   if (error) {
     return fail(
       error.code === "23505" || error.message.includes("duplicate")
@@ -52,13 +56,16 @@ export async function inviteMember(email: string, role: Role): Promise<ActionRes
   }
 
   // Best effort: the invite already exists, so a mail failure must not undo it.
-  await sendInviteEmail({
-    to: clean,
-    workspaceName: ctx.workspace.name,
-    roleLabel: ROLE_LABEL[role],
-    inviterName:
-      (ctx.user.user_metadata?.full_name as string | undefined) ?? ctx.user.email ?? "A teammate",
-  });
+  if (invite) {
+    await sendInviteEmail({
+      to: clean,
+      workspaceName: ctx.workspace.name,
+      roleLabel: ROLE_LABEL[role],
+      inviterName:
+        (ctx.user.user_metadata?.full_name as string | undefined) ?? ctx.user.email ?? "A teammate",
+      inviteId: invite.id as string,
+    });
+  }
 
   revalidatePath("/settings");
   return ok();

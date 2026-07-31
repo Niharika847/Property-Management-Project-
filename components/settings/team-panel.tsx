@@ -57,6 +57,19 @@ export function TeamPanel({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  /** Share this when email isn't configured — the invitee can join immediately. */
+  async function copyLink(inviteId: string) {
+    const url = `${window.location.origin}/join/${inviteId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      window.prompt("Copy this invite link:", url);
+    }
+    setCopied(inviteId);
+    setTimeout(() => setCopied(null), 2500);
+  }
 
   async function run(key: string, fn: () => Promise<{ ok: boolean; error?: string }>) {
     setBusy(key);
@@ -185,14 +198,23 @@ export function TeamPanel({
                   </span>
                 </div>
                 {canEdit && (
-                  <button
-                    type="button"
-                    onClick={() => run(`inv-${inv.id}`, () => revokeInvite(inv.id))}
-                    disabled={busy === `inv-${inv.id}`}
-                    className="shrink-0 text-xs text-muted hover:text-danger disabled:opacity-50"
-                  >
-                    Revoke
-                  </button>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => copyLink(inv.id)}
+                      className="text-xs font-medium text-brand hover:underline"
+                    >
+                      {copied === inv.id ? "Link copied" : "Copy link"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => run(`inv-${inv.id}`, () => revokeInvite(inv.id))}
+                      disabled={busy === `inv-${inv.id}`}
+                      className="text-xs text-muted hover:text-danger disabled:opacity-50"
+                    >
+                      Revoke
+                    </button>
+                  </div>
                 )}
               </li>
             ))}
@@ -229,8 +251,9 @@ export function TeamPanel({
           <p className="mt-2 text-xs text-muted">{ROLE_BLURB[role]}</p>
           {sent && (
             <p className="mt-2 flex items-center gap-1 text-sm text-brand">
-              <Check className="size-4" aria-hidden /> Invite created — they&apos;ll see it in
-              Settings once they sign in with that email.
+              <Check className="size-4" aria-hidden /> Invite created. Use{" "}
+              <strong>Copy link</strong> above to send it to them — or they&apos;ll find it in
+              Settings when they sign in with that email.
             </p>
           )}
         </form>

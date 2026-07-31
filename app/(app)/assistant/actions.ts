@@ -3,6 +3,7 @@
 import { actionContext } from "@/lib/action-helpers";
 import { aiConfigured, friendlyAiError, geminiChat } from "@/lib/gemini";
 import { runAssistantTool } from "@/lib/ai/tools";
+import { log } from "@/lib/logger";
 
 const SYSTEM = `You are Roost, a financial assistant for an Australian property investor.
 
@@ -72,6 +73,7 @@ export async function askAssistant(history: ChatTurn[]): Promise<AskResult> {
       sources: ["Portfolio overview", "All properties", "Expenses", "Income", "Rent status"],
     };
   } catch (e) {
+    log.error("assistant.failed", e, { workspace: wid });
     return { ok: false, error: friendlyAiError(e) };
   }
 }

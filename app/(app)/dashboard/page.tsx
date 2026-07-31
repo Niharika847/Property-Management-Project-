@@ -11,6 +11,7 @@ import {
   fmtDate,
   monthRange,
   FREQUENCY_LABEL,
+  ANNUAL_FACTOR,
 } from "@/lib/format";
 import {
   ArrowUpRight,
@@ -52,6 +53,7 @@ export default async function DashboardPage({
     { data: leases },
     { data: incomeRows },
     { data: expenseRows },
+    { data: mortgages },
   ] = await Promise.all([
     supabase.from("properties").select("id, address, suburb, status, current_value").order("created_at"),
     supabase.from("leases").select("property_id, rent_amount, frequency").eq("status", "active"),
@@ -61,6 +63,7 @@ export default async function DashboardPage({
       .select("date, amount, property_id, description, categories ( name ), properties ( address )")
       .gte("date", windowStart)
       .order("date", { ascending: false }),
+    supabase.from("mortgages").select("property_id, repayment_amount, frequency"),
   ]);
 
   const props = properties ?? [];
@@ -94,7 +97,14 @@ export default async function DashboardPage({
   ).length;
   const expensesPerPeriod = period === "week" ? monthExpenses / WEEKS_PER_MONTH : monthExpenses;
 
-  const net = rentPerPeriod - expensesPerPeriod;
+  // Loan repayments are real cash out even though only the interest portion is a
+  // deductible expense, so the headline cash flow must include them.
+  const mortgageMonthly = (mortgages ?? []).reduce(
+    (s, m) => s + (Number(m.repayment_amount) * (ANNUAL_FACTOR[m.frequency] ?? 12)) / 12,
+    0
+  );
+  const mortgagePerPeriod = period === "week" ? mortgageMonthly / WEEKS_PER_MONTH : mortgageMonthly;
+  const net = rentPerPeriod - expensesPerPeriod - mortgagePerPeriod;
   const rented = props.filter((p) => p.status === "rental").length;
   const vacant = props.filter((p) => p.status === "vacant").length;
 
@@ -118,7 +128,10 @@ export default async function DashboardPage({
     {
       label: "Net cashflow",
       value: aud(net),
-      sub: `${net >= 0 ? "surplus" : "shortfall"} · per ${periodWord}`,
+      sub:
+        mortgageMonthly > 0
+          ? `${net >= 0 ? "surplus" : "shortfall"} · after ${aud(mortgagePerPeriod)} loan`
+          : `${net >= 0 ? "surplus" : "shortfall"} · per ${periodWord}`,
       icon: Sparkles,
       tint: "bg-brand-soft text-brand",
       accent: net >= 0 ? "text-brand" : "text-terra",
@@ -141,10 +154,15 @@ export default async function DashboardPage({
     if (!pid) continue;
     monthExpenseByProp.set(pid, (monthExpenseByProp.get(pid) ?? 0) + Number(r.amount));
   }
+  const mortgageByProp = new Map<string, number>();
+  for (const m of mortgages ?? []) {
+    const monthly = (Number(m.repayment_amount) * (ANNUAL_FACTOR[m.frequency] ?? 12)) / 12;
+    mortgageByProp.set(m.property_id, (mortgageByProp.get(m.property_id) ?? 0) + monthly);
+  }
   const propertyRows = props.slice(0, 5).map((p) => {
     const lease = leaseByProp.get(p.id);
     const rentMo = lease ? annualRent(Number(lease.rent_amount), lease.frequency) / 12 : 0;
-    const net = rentMo - (monthExpenseByProp.get(p.id) ?? 0);
+    const net = rentMo - (monthExpenseByProp.get(p.id) ?? 0) - (mortgageByProp.get(p.id) ?? 0);
     return { ...p, lease, rentMo, net };
   });
 

@@ -11,6 +11,7 @@ import {
   fmtDate,
   fyRange,
   STATUS_LABEL,
+  ANNUAL_FACTOR,
 } from "@/lib/format";
 import type { Lease, Property } from "@/lib/types";
 import { notFound } from "next/navigation";
@@ -66,6 +67,18 @@ export default async function PropertyPage({
   const incomeFY = (incomeRows ?? []).reduce((s, r) => s + Number(r.amount), 0);
   const expensesFY = (expenseRows ?? []).reduce((s, r) => s + Number(r.amount), 0);
   const activeLease = lease as Lease | null;
+
+  // Loan repayments since the financial year started — cash out, so cash flow
+  // must account for them even though only interest is deductible.
+  const mtg = mortgage as Mortgage | null;
+  const monthsElapsed = Math.max(
+    1,
+    Math.round((Date.now() - new Date(`${fy.start}T00:00:00`).getTime()) / 2_629_800_000)
+  );
+  const mortgageMonthly = mtg
+    ? (Number(mtg.repayment_amount) * (ANNUAL_FACTOR[mtg.frequency] ?? 12)) / 12
+    : 0;
+  const mortgageFYCost = mortgageMonthly * monthsElapsed;
   const grossYield =
     activeLease && p.current_value
       ? (annualRent(activeLease.rent_amount, activeLease.frequency) / p.current_value) * 100
@@ -100,7 +113,7 @@ export default async function PropertyPage({
   const kpis: Array<[string, string]> = [
     [`Income ${fy.label}`, incomeFY ? audCents(incomeFY) : "$0.00"],
     [`Expenses ${fy.label}`, expensesFY ? audCents(expensesFY) : "$0.00"],
-    ["Cash flow", audCents(incomeFY - expensesFY)],
+    [mortgageFYCost > 0 ? "Cash flow (after loan)" : "Cash flow", audCents(incomeFY - expensesFY - mortgageFYCost)],
     ["Gross yield", grossYield ? `${grossYield.toFixed(1)}%` : "—"],
   ];
 
@@ -155,7 +168,7 @@ export default async function PropertyPage({
       <div className="mt-4">
         <MortgagePanel
           propertyId={p.id}
-          mortgage={(mortgage as Mortgage | null) ?? null}
+          mortgage={mtg}
           propertyValue={p.current_value}
           canEdit={canEdit}
         />

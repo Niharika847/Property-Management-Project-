@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-bg p-4">
@@ -12,6 +14,17 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="rounded-(--radius-card) border border-line bg-card p-6 shadow-sm">
           {children}
         </div>
+        <p className="mt-5 text-center text-xs text-muted">
+          By continuing you agree to our{" "}
+          <Link href="/terms" className="underline hover:text-ink">
+            Terms
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="underline hover:text-ink">
+            Privacy Policy
+          </Link>
+          .
+        </p>
       </div>
     </main>
   );

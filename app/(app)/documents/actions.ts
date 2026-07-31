@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { actionContext, fail, ok, type ActionResult } from "@/lib/action-helpers";
+import { log } from "@/lib/logger";
 import {
   aiConfigured,
   isVisionType,
@@ -93,6 +94,7 @@ export async function ingestReceipt(input: {
       data: { documentId: doc.id, extraction: { ...extraction, category_id: match?.id ?? null }, message: null },
     };
   } catch (e) {
+    log.error("receipt.extraction_failed", e, { documentId: doc.id });
     await ctx.supabase.from("documents").update({ ocr_status: "failed" }).eq("id", doc.id);
     return {
       ok: true,

@@ -346,7 +346,15 @@ export function SettingsView({
             </a>
           </div>
           <p className="mt-3 text-xs text-muted">
-            Your data is yours — exports are plain CSV that opens in Excel or Google Sheets.
+            Your data is yours — exports are plain CSV that opens in Excel or Google Sheets. See our{" "}
+            <a href="/privacy" className="underline hover:text-ink">
+              Privacy Policy
+            </a>{" "}
+            and{" "}
+            <a href="/terms" className="underline hover:text-ink">
+              Terms
+            </a>
+            .
           </p>
 
           {isOwner && (

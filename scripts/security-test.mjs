@@ -53,14 +53,44 @@ const api = (path, { token, method = "GET", body, prefer } = {}) =>
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
 
+const SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
+
+/** Creates a usable test account.
+ *  Email confirmation is enabled in production, so a plain signup no longer
+ *  yields a session. With a service-role key we can create pre-confirmed users;
+ *  without one the suite cannot run and says so rather than passing vacuously. */
 const signUp = async (email, password) => {
-  await api("/auth/v1/signup", { method: "POST", body: { email, password } });
+  if (SERVICE_KEY) {
+    const res = await fetch(`${URL_BASE}/auth/v1/admin/users`, {
+      method: "POST",
+      headers: {
+        apikey: SERVICE_KEY,
+        Authorization: `Bearer ${SERVICE_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password, email_confirm: true }),
+    });
+    if (!res.ok) throw new Error(`admin create failed for ${email}: ${await res.text()}`);
+  } else {
+    await api("/auth/v1/signup", { method: "POST", body: { email, password } });
+  }
+
   const res = await api("/auth/v1/token?grant_type=password", {
     method: "POST",
     body: { email, password },
   });
   const json = await res.json();
-  if (!json.access_token) throw new Error(`login failed for ${email}: ${JSON.stringify(json)}`);
+  if (!json.access_token) {
+    if (!SERVICE_KEY) {
+      throw new Error(
+        "cannot create confirmed test users — email confirmation is enabled.\n" +
+          "  Add SUPABASE_SERVICE_ROLE_KEY to .env.local (Supabase dashboard →\n" +
+          "  Project Settings → API → service_role) so the suite can create\n" +
+          "  pre-confirmed throwaway accounts. It is server-only; never expose it."
+      );
+    }
+    throw new Error(`login failed for ${email}: ${JSON.stringify(json)}`);
+  }
   return json.access_token;
 };
 
