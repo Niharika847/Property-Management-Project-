@@ -29,8 +29,8 @@ export function ReportsView({ properties }: { properties: Pick<Property, "id" | 
   const qs = `report=${report}&period=${period}&property=${property}`;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
+    <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+      <div className="shrink-0">
         <h1 className="text-2xl font-bold tracking-tight text-ink">Reports</h1>
         <p className="mt-1 text-sm text-muted">
           Generate a tax summary or transaction ledger — download as CSV or save as PDF.

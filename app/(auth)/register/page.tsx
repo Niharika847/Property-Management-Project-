@@ -110,7 +110,7 @@ export default function RegisterPage() {
     <div className="flex flex-col gap-4">
       <OAuthSection />
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
-        <Input label="Full name" name="full_name" autoComplete="name" placeholder="Niharika Singh" required />
+        <Input label="Full name" name="full_name" autoComplete="name" required />
         <div>
           <Input
             label="Email"

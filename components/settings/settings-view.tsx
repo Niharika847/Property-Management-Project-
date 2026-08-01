@@ -170,7 +170,7 @@ export function SettingsView({
   const overLimit = limits.properties != null && usage.properties > limits.properties;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-ink">Settings</h1>

@@ -41,8 +41,8 @@ export function CalendarView({ month, events }: { month: string; events: CalEven
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1">
+      <div className="flex shrink-0 flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-ink">Calendar</h1>
           <p className="mt-1 text-sm text-muted">
@@ -94,22 +94,22 @@ export function CalendarView({ month, events }: { month: string; events: CalEven
       </div>
 
       {/* Month grid */}
-      <div className="overflow-hidden rounded-(--radius-card) border border-line bg-card">
-        <div className="grid grid-cols-7 border-b border-line">
+      <div className="flex flex-col overflow-hidden rounded-(--radius-card) border border-line bg-card lg:min-h-0 lg:flex-[3]">
+        <div className="grid shrink-0 grid-cols-7 border-b border-line">
           {WEEKDAYS.map((d) => (
             <div key={d} className="px-2 py-2 text-center text-[0.68rem] font-semibold tracking-wide text-muted uppercase">
               {d}
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-7">
+        <div className="grid grid-cols-7 lg:min-h-0 lg:flex-1 lg:auto-rows-fr lg:overflow-y-auto">
           {cells.map((date, i) => {
             const dayEvents = date ? (byDay.get(date) ?? []) : [];
             const isToday = date === todayISO;
             return (
               <div
                 key={i}
-                className={`min-h-[6.5rem] border-r border-b border-line p-1.5 last:border-r-0 ${
+                className={`min-h-[6.5rem] overflow-hidden border-r lg:min-h-[4.25rem] border-b border-line p-1.5 last:border-r-0 ${
                   date ? "" : "bg-card-2/40"
                 }`}
               >
@@ -151,15 +151,15 @@ export function CalendarView({ month, events }: { month: string; events: CalEven
       </div>
 
       {/* Agenda */}
-      <section className="rounded-(--radius-card) border border-line bg-card p-6">
-        <h2 className="mb-4 text-base font-semibold text-ink">
+      <section className="flex flex-col rounded-(--radius-card) border border-line bg-card p-4 lg:min-h-0 lg:flex-[2] lg:overflow-hidden">
+        <h2 className="mb-3 shrink-0 text-base font-semibold text-ink">
           Agenda — {monthLabel}
           {events.length > 0 && (
             <span className="ml-2 text-sm font-normal text-muted">{events.length} events</span>
           )}
         </h2>
         {events.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-10 text-center">
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-center lg:min-h-0 lg:flex-1 lg:py-0">
             <span className="flex size-11 items-center justify-center rounded-full bg-brand-soft text-brand">
               <CalendarDays className="size-5" aria-hidden />
             </span>
@@ -169,7 +169,7 @@ export function CalendarView({ month, events }: { month: string; events: CalEven
             </p>
           </div>
         ) : (
-          <ul className="divide-y divide-line">
+          <ul className="divide-y divide-line lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
             {events.map((e) => (
               <li key={e.id} className="flex items-center justify-between gap-3 py-2.5">
                 <div className="flex min-w-0 items-center gap-3">

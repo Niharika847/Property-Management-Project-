@@ -21,7 +21,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const fullName = (user.user_metadata?.full_name as string | undefined) ?? undefined;
 
   return (
-    <div className="flex min-h-dvh bg-bg">
+    // Fixed-height app shell: the page itself never scrolls. Individual panels
+    // own their overflow, so the layout always fits the viewport.
+    <div className="flex min-h-dvh bg-bg lg:h-dvh lg:overflow-hidden">
       <Sidebar
         email={user.email ?? ""}
         name={fullName}
@@ -29,7 +31,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         workspaces={memberships.map((w) => ({ id: w.id, name: w.name, role: w.role }))}
         activeWorkspaceId={workspace?.id ?? ""}
       />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <MobileNav
           email={user.email ?? ""}
           name={fullName}
@@ -37,7 +39,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           workspaces={memberships.map((w) => ({ id: w.id, name: w.name, role: w.role }))}
           activeWorkspaceId={workspace?.id ?? ""}
         />
-        <main className="mx-auto w-full max-w-[1400px] flex-1 p-4 md:p-6 lg:p-8">{children}</main>
+        <main className="mx-auto flex w-full min-h-0 max-w-[1500px] flex-1 flex-col p-3 md:p-4 lg:p-5">
+          {children}
+        </main>
       </div>
       <CommandPalette />
     </div>

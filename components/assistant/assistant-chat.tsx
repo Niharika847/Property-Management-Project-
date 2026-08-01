@@ -64,7 +64,7 @@ export function AssistantChat({ aiOn }: { aiOn: boolean }) {
   const empty = messages.length === 0;
 
   return (
-    <div className="mx-auto flex h-[calc(100dvh-8rem)] max-w-3xl flex-col">
+    <div className="mx-auto flex h-[calc(100dvh-11rem)] w-full max-w-3xl flex-col lg:h-auto lg:min-h-0 lg:flex-1">
       <div className="mb-4 flex items-center gap-2">
         <span className="flex size-8 items-center justify-center rounded-lg bg-brand-soft text-brand">
           <Sparkles className="size-4" aria-hidden />
@@ -85,7 +85,7 @@ export function AssistantChat({ aiOn }: { aiOn: boolean }) {
         </div>
       )}
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
         {empty ? (
           <div className="flex h-full flex-col items-center justify-center gap-5 text-center">
             <span className="flex size-14 items-center justify-center rounded-full bg-brand-soft text-brand">

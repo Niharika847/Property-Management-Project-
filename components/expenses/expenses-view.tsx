@@ -48,7 +48,7 @@ export function ExpensesView({
 
   return (
     <>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <div className="mb-4 flex shrink-0 flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-ink">Expenses</h1>
           <p className="mt-1 text-sm text-muted">
@@ -95,9 +95,9 @@ export function ExpensesView({
           action={<Button onClick={() => setAdding(true)}>Add your first expense</Button>}
         />
       ) : (
-        <div className="overflow-x-auto rounded-(--radius-card) border border-line bg-card">
+        <div className="overflow-x-auto rounded-(--radius-card) border border-line bg-card lg:min-h-0 lg:flex-1 lg:overflow-auto">
           <table className="w-full text-sm">
-            <thead>
+            <thead className="sticky top-0 z-10 bg-card">
               <tr className="border-b border-line text-left text-xs tracking-wide text-muted uppercase">
                 <th className="px-4 py-3 font-semibold">Date</th>
                 <th className="px-4 py-3 font-semibold">Description</th>

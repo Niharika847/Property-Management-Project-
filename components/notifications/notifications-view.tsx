@@ -35,8 +35,8 @@ export function NotificationsView({ alerts }: { alerts: Alert[] }) {
   const hiddenCount = alerts.length - visible.length;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1">
+      <div className="flex shrink-0 flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-ink">Notifications</h1>
           <p className="mt-1 text-sm text-muted">
@@ -55,7 +55,7 @@ export function NotificationsView({ alerts }: { alerts: Alert[] }) {
       </div>
 
       {!ready ? null : visible.length === 0 ? (
-        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 rounded-(--radius-card) border border-dashed border-line bg-card/50 p-10 text-center">
+        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 rounded-(--radius-card) border border-dashed border-line bg-card/50 p-10 text-center lg:min-h-0 lg:flex-1">
           <span className="flex size-12 items-center justify-center rounded-full bg-brand-soft text-brand">
             <Check className="size-6" aria-hidden />
           </span>
@@ -67,7 +67,7 @@ export function NotificationsView({ alerts }: { alerts: Alert[] }) {
           </p>
         </div>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
           {visible.map((a) => {
             const tone = TONE[a.severity];
             return (

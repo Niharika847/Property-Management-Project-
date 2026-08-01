@@ -58,7 +58,7 @@ export default async function ExpensesPage({
   const categoryList = (categories ?? []) as Category[];
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1">
       <ExpensesView
         expenses={rows}
         properties={propertyList}

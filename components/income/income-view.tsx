@@ -73,7 +73,7 @@ export function IncomeView({
 
   return (
     <>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <div className="mb-4 flex shrink-0 flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-ink">Income</h1>
           <p className="mt-1 text-sm text-muted">
@@ -99,7 +99,7 @@ export function IncomeView({
           body="Add a lease to a rental property and its rent schedule appears here automatically."
         />
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
           {overdue.length > 0 && (
             <section className="rounded-(--radius-card) border border-danger/40 bg-card p-5">
               <h2 className="text-sm font-semibold text-danger">Overdue rent</h2>

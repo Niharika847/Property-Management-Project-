@@ -80,8 +80,8 @@ export function RecurringPanel({
   }
 
   return (
-    <section className="rounded-(--radius-card) border border-line bg-card p-6">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+    <section className="flex flex-col rounded-(--radius-card) border border-line bg-card p-4 lg:max-h-[32vh] lg:shrink-0 lg:overflow-hidden">
+      <div className="mb-3 flex shrink-0 flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
             <Repeat className="size-4" aria-hidden />
@@ -112,7 +112,7 @@ export function RecurringPanel({
           No recurring bills yet. Add one and Roost will keep creating it on schedule.
         </p>
       ) : (
-        <ul className="divide-y divide-line">
+        <ul className="divide-y divide-line lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
           {rules.map((r) => (
             <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
               <div className="min-w-0">

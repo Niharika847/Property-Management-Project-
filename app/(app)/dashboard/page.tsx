@@ -181,9 +181,9 @@ export default async function DashboardPage({
   const recentExpenses = expenses.slice(0, 4);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1">
       {/* Command row */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
         <AskBar />
         <PeriodToggle />
         <Link
@@ -195,33 +195,33 @@ export default async function DashboardPage({
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid shrink-0 grid-cols-2 gap-3 xl:grid-cols-4">
         {kpis.map((kpi) => (
-          <div key={kpi.label} className="rounded-(--radius-card) border border-line bg-card p-5">
+          <div key={kpi.label} className="rounded-(--radius-card) border border-line bg-card p-3.5">
             <div className="flex items-start justify-between">
               <span className="text-sm text-muted">{kpi.label}</span>
-              <span className={`flex size-8 items-center justify-center rounded-lg ${kpi.tint}`}>
+              <span className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${kpi.tint}`}>
                 <kpi.icon className="size-4" aria-hidden />
               </span>
             </div>
-            <div className={`num mt-3 text-3xl font-bold ${kpi.accent ?? "text-ink"}`}>{kpi.value}</div>
-            <div className="mt-2 text-xs text-muted">{kpi.sub}</div>
+            <div className={`num mt-1.5 text-2xl font-bold ${kpi.accent ?? "text-ink"}`}>{kpi.value}</div>
+            <div className="mt-1 truncate text-[0.7rem] text-muted">{kpi.sub}</div>
           </div>
         ))}
       </div>
 
       {/* Chart + properties */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <section className="rounded-(--radius-card) border border-line bg-card p-6 lg:col-span-2">
-          <div className="mb-6 flex items-baseline justify-between">
+      <div className="grid grid-cols-1 gap-3 lg:min-h-0 lg:flex-1 lg:grid-cols-3">
+        <section className="flex flex-col rounded-(--radius-card) border border-line bg-card p-4 lg:col-span-2 lg:min-h-0 lg:overflow-hidden">
+          <div className="mb-3 flex shrink-0 items-baseline justify-between">
             <h2 className="text-base font-semibold text-ink">Cashflow — last 6 months</h2>
             <span className="text-xs text-muted">rent in vs expenses out</span>
           </div>
           <CashflowChart data={buckets} />
         </section>
 
-        <section className="rounded-(--radius-card) border border-line bg-card p-6">
-          <div className="mb-4 flex items-baseline justify-between">
+        <section className="flex flex-col rounded-(--radius-card) border border-line bg-card p-4 lg:min-h-0 lg:overflow-hidden">
+          <div className="mb-2 flex shrink-0 items-baseline justify-between">
             <h2 className="text-base font-semibold text-ink">Properties</h2>
             <span className="text-xs text-muted">rent &amp; net per property</span>
           </div>
@@ -243,8 +243,9 @@ export default async function DashboardPage({
               <SeedButton />
             </div>
           ) : (
+            <div className="max-h-72 overflow-y-auto lg:max-h-none lg:min-h-0 lg:flex-1">
             <table className="w-full text-sm">
-              <thead>
+              <thead className="sticky top-0 bg-card">
                 <tr className="text-left text-[0.7rem] tracking-wide text-muted uppercase">
                   <th className="pb-2 font-semibold">Property</th>
                   <th className="pb-2 font-semibold">Status</th>
@@ -255,33 +256,34 @@ export default async function DashboardPage({
               <tbody className="divide-y divide-line">
                 {propertyRows.map((p) => (
                   <tr key={p.id}>
-                    <td className="py-3 pr-2">
+                    <td className="py-2 pr-2">
                       <Link href={`/properties/${p.id}`} className="block hover:text-brand">
                         <span className="block truncate font-medium text-ink">{p.address}</span>
                         <span className="block truncate text-xs text-muted">{p.suburb}</span>
                       </Link>
                     </td>
-                    <td className="py-3">
+                    <td className="py-2">
                       <StatusPill value={p.status} />
                     </td>
-                    <td className="num py-3 text-right text-ink">
+                    <td className="num py-2 text-right text-ink">
                       {p.lease ? `${aud(p.rentMo)}/mo` : "—"}
                     </td>
-                    <td className={`num py-3 text-right font-semibold ${p.net >= 0 ? "text-brand" : "text-terra"}`}>
+                    <td className={`num py-2 text-right font-semibold ${p.net >= 0 ? "text-brand" : "text-terra"}`}>
                       {p.net >= 0 ? aud(p.net) : `-${aud(Math.abs(p.net))}`}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </section>
       </div>
 
       {/* Recent expenses + where it goes */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <section className="rounded-(--radius-card) border border-line bg-card p-6 lg:col-span-2">
-          <div className="mb-4 flex items-center justify-between">
+      <div className="grid grid-cols-1 gap-3 lg:min-h-0 lg:flex-1 lg:grid-cols-3">
+        <section className="flex flex-col rounded-(--radius-card) border border-line bg-card p-4 lg:col-span-2 lg:min-h-0 lg:overflow-hidden">
+          <div className="mb-2 flex shrink-0 items-center justify-between">
             <h2 className="text-base font-semibold text-ink">Recent expenses</h2>
             <Link
               href="/expenses"
@@ -298,14 +300,14 @@ export default async function DashboardPage({
               </p>
             </div>
           ) : (
-            <ul className="divide-y divide-line">
+            <ul className="max-h-72 divide-y divide-line overflow-y-auto lg:max-h-none lg:min-h-0 lg:flex-1">
               {recentExpenses.map((e, i) => {
                 const cat = (e.categories as unknown as { name: string } | null)?.name ?? "Expense";
                 const addr = (e.properties as unknown as { address: string } | null)?.address ?? "";
                 return (
-                  <li key={i} className="flex items-center justify-between gap-3 py-3">
+                  <li key={i} className="flex items-center justify-between gap-3 py-2">
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-terra-soft text-xs font-semibold text-terra">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-terra-soft text-xs font-semibold text-terra">
                         {cat.slice(0, 2).toUpperCase()}
                       </span>
                       <div className="min-w-0">
@@ -327,8 +329,8 @@ export default async function DashboardPage({
           )}
         </section>
 
-        <section className="flex flex-col rounded-(--radius-card) border border-line bg-card p-6">
-          <div className="mb-4 flex items-baseline justify-between">
+        <section className="flex flex-col rounded-(--radius-card) border border-line bg-card p-4 lg:min-h-0 lg:overflow-hidden">
+          <div className="mb-2 flex shrink-0 items-baseline justify-between">
             <h2 className="text-base font-semibold text-ink">Where it goes</h2>
             <span className="text-xs text-muted">this month</span>
           </div>
@@ -337,7 +339,7 @@ export default async function DashboardPage({
               Nothing spent yet this month.
             </p>
           ) : (
-            <div className="flex flex-1 flex-col gap-4">
+            <div className="flex flex-col gap-2.5 overflow-y-auto lg:min-h-0 lg:flex-1">
               {categoryRows.map(([name, value]) => (
                 <div key={name}>
                   <div className="flex items-baseline justify-between text-sm">
@@ -354,7 +356,7 @@ export default async function DashboardPage({
               ))}
             </div>
           )}
-          <div className="mt-5 flex items-center justify-between border-t border-line pt-4">
+          <div className="mt-3 flex shrink-0 items-center justify-between border-t border-line pt-3">
             <span className="font-semibold text-ink">Total out</span>
             <span className="num font-bold text-terra">
               {monthExpenses > 0 ? `-${audCents(monthExpenses)}` : "$0"}

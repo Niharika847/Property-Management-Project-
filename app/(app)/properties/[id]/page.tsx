@@ -118,10 +118,10 @@ export default async function PropertyPage({
   ];
 
   return (
-    <>
+    <div className="flex flex-col lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
       <Link
         href="/properties"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-muted hover:text-ink"
+        className="mb-4 inline-flex shrink-0 items-center gap-1 text-sm text-muted hover:text-ink"
       >
         <ArrowLeft className="size-4" aria-hidden /> All properties
       </Link>
@@ -211,6 +211,6 @@ export default async function PropertyPage({
           </ul>
         )}
       </section>
-    </>
+    </div>
   );
 }

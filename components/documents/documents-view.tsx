@@ -38,8 +38,8 @@ export function DocumentsView({
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
+    <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1">
+      <div className="shrink-0">
         <h1 className="text-2xl font-bold tracking-tight text-ink">Documents</h1>
         <p className="mt-1 text-sm text-muted">
           Snap a receipt and AI files it — vendor, amount, GST and category, linked to the right
@@ -49,8 +49,8 @@ export function DocumentsView({
 
       <ReceiptUploader workspaceId={workspaceId} properties={properties} categories={categories} />
 
-      <section className="rounded-(--radius-card) border border-line bg-card p-6">
-        <h2 className="mb-4 text-base font-semibold text-ink">
+      <section className="flex flex-col rounded-(--radius-card) border border-line bg-card p-4 lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+        <h2 className="mb-3 shrink-0 text-base font-semibold text-ink">
           Library{documents.length > 0 && <span className="ml-2 text-sm font-normal text-muted">{documents.length}</span>}
         </h2>
         {documents.length === 0 ? (
@@ -62,7 +62,7 @@ export function DocumentsView({
             <p className="mt-1 text-sm text-muted">Upload a receipt above to get started.</p>
           </div>
         ) : (
-          <ul className="divide-y divide-line">
+          <ul className="divide-y divide-line lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
             {documents.map((d) => {
               const status = STATUS[d.ocr_status] ?? STATUS.pending;
               const summary =

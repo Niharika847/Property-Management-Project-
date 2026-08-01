@@ -21,7 +21,7 @@ export function PropertiesView({
 
   return (
     <>
-      <div className="mb-6 flex items-end justify-between">
+      <div className="mb-4 flex shrink-0 items-end justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-ink">Properties</h1>
           <p className="mt-1 text-sm text-muted">
@@ -43,7 +43,7 @@ export function PropertiesView({
           action={<Button onClick={() => setAdding(true)}>Add your first property</Button>}
         />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:min-h-0 lg:flex-1 lg:grid-cols-3 lg:content-start lg:overflow-y-auto">
           {properties.map((p) => {
             const lease = leasesByProperty[p.id];
             const yieldPct =

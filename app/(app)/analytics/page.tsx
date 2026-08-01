@@ -123,36 +123,36 @@ export default async function AnalyticsPage() {
   const netMax = Math.max(1, ...perf.map((p) => Math.abs(p.net)));
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1">
       <Header fyLabel={fy.label} />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid shrink-0 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-(--radius-card) border border-line bg-card p-4">
+          <div key={s.label} className="rounded-(--radius-card) border border-line bg-card p-3">
             <div className="text-xs text-muted">{s.label}</div>
             <div className={`num mt-1 text-lg font-bold ${s.tone}`}>{s.value}</div>
           </div>
         ))}
       </div>
 
-      <section className="rounded-(--radius-card) border border-line bg-card p-6">
-        <div className="mb-6 flex items-baseline justify-between">
+      <section className="flex flex-col rounded-(--radius-card) border border-line bg-card p-4 lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+        <div className="mb-3 flex shrink-0 items-baseline justify-between">
           <h2 className="text-base font-semibold text-ink">Cash flow — last 12 months</h2>
           <span className="text-xs text-muted">rent in vs expenses out</span>
         </div>
         <CashflowChart data={buckets} />
       </section>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <section className="rounded-(--radius-card) border border-line bg-card p-6">
-          <div className="mb-4 flex items-baseline justify-between">
+      <div className="grid grid-cols-1 gap-3 lg:min-h-0 lg:flex-1 lg:grid-cols-2">
+        <section className="flex flex-col rounded-(--radius-card) border border-line bg-card p-4 lg:min-h-0 lg:overflow-hidden">
+          <div className="mb-3 flex shrink-0 items-baseline justify-between">
             <h2 className="text-base font-semibold text-ink">Expense categories</h2>
             <span className="text-xs text-muted">{fy.label}</span>
           </div>
           {categoryRows.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted">No expenses this financial year yet.</p>
           ) : (
-            <div className="flex flex-col gap-3.5">
+            <div className="flex flex-col gap-3 overflow-y-auto lg:min-h-0 lg:flex-1">
               {categoryRows.map(([name, value]) => (
                 <div key={name}>
                   <div className="flex items-baseline justify-between text-sm">
@@ -176,12 +176,12 @@ export default async function AnalyticsPage() {
           )}
         </section>
 
-        <section className="rounded-(--radius-card) border border-line bg-card p-6">
-          <div className="mb-4 flex items-baseline justify-between">
+        <section className="flex flex-col rounded-(--radius-card) border border-line bg-card p-4 lg:min-h-0 lg:overflow-hidden">
+          <div className="mb-3 flex shrink-0 items-baseline justify-between">
             <h2 className="text-base font-semibold text-ink">Property performance</h2>
             <span className="text-xs text-muted">net {fy.label}</span>
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 overflow-y-auto lg:min-h-0 lg:flex-1">
             {perf.map((p) => (
               <div key={p.id}>
                 <div className="flex items-center justify-between gap-2 text-sm">
