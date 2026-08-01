@@ -54,6 +54,7 @@ export function SettingsView({
   canEdit,
   isOwner,
   team,
+  billing,
 }: {
   email: string;
   fullName: string;
@@ -65,6 +66,7 @@ export function SettingsView({
   canEdit: boolean;
   isOwner: boolean;
   team?: React.ReactNode;
+  billing?: React.ReactNode;
 }) {
   const router = useRouter();
 
@@ -319,9 +321,11 @@ export function SettingsView({
               You&apos;re over the {limits.label} limit — upgrading unlocks more properties.
             </p>
           )}
-          <p className="mt-4 text-xs text-muted">
-            Paid plans and card payments arrive with billing (Stripe). Nothing is charged today.
-          </p>
+          {billing ?? (
+            <p className="mt-4 text-xs text-muted">
+              Paid plans and card payments arrive with billing (Stripe). Nothing is charged today.
+            </p>
+          )}
         </Section>
 
         {team}

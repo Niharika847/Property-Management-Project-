@@ -48,6 +48,13 @@ export const ANNUAL_FACTOR: Record<string, number> = {
 export const annualRent = (amount: number, frequency: string) =>
   amount * (ANNUAL_FACTOR[frequency] ?? 12);
 
+/** Australian GST on a GST-inclusive price is 1/11th of the total, rounded to
+ *  cents. Returns 0 for anything that is not a positive amount. */
+export function gstFromInclusive(total: number): number {
+  if (!Number.isFinite(total) || total <= 0) return 0;
+  return Math.round((total / 11) * 100) / 100;
+}
+
 export const FREQUENCY_LABEL: Record<string, string> = {
   weekly: "wk",
   fortnightly: "fn",

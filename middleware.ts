@@ -8,6 +8,13 @@ const PUBLIC_PATHS = [
   "/auth",
   "/privacy",
   "/terms",
+  // Machine endpoints. These have no session by definition — Stripe's servers
+  // call the webhook, and an error report fires precisely when the session may
+  // be broken — so a redirect to /login would silently swallow both. Each one
+  // authenticates itself: the webhook by signature, the error route by
+  // accepting nothing it echoes back.
+  "/api/stripe/webhook",
+  "/api/client-error",
 ];
 
 export async function middleware(request: NextRequest) {

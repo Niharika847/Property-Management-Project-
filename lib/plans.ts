@@ -13,7 +13,11 @@ export const PLANS: Record<string, Plan> = {
   agency: { key: "agency", label: "Agency", price: "$129/mo", properties: null },
 };
 
-export const planFor = (key: string | null | undefined): Plan => PLANS[key ?? "free"] ?? PLANS.free;
+/** Looks up a plan by key. Uses hasOwn rather than a bare index because keys
+ *  like "__proto__" resolve to inherited object properties, which are truthy
+ *  and would slip past a `?? PLANS.free` fallback as a plan with no fields. */
+export const planFor = (key: string | null | undefined): Plan =>
+  key && Object.hasOwn(PLANS, key) ? PLANS[key] : PLANS.free;
 
 /** Existing accounts that already exceed a limit keep what they have — the cap
  *  only blocks adding more, so nobody's data is stranded by a pricing change. */

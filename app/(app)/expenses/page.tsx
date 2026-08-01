@@ -3,15 +3,21 @@ import { ensureWorkspace } from "@/lib/workspace";
 import { ExpensesView } from "@/components/expenses/expenses-view";
 import { RecurringPanel, type RecurringRule } from "@/components/expenses/recurring-panel";
 import { fyRange } from "@/lib/format";
+import { pageInfo, parsePage } from "@/lib/pagination";
 import type { Category, Expense, Property } from "@/lib/types";
 import { redirect } from "next/navigation";
+
+/** Rows per page. The ledger has to stay complete for tax time, so the list
+ *  pages through the whole history rather than truncating it. */
+const PAGE_SIZE = 50;
 
 export default async function ExpensesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ property?: string }>;
+  searchParams: Promise<{ property?: string; page?: string }>;
 }) {
-  const { property } = await searchParams;
+  const { property, page: pageParam } = await searchParams;
+  const requestedPage = parsePage(pageParam);
   const supabase = await createClient();
   const {
     data: { user },
@@ -28,16 +34,39 @@ export default async function ExpensesPage({
     generated = typeof data === "number" ? data : 0;
   }
 
+  // Count first so an out-of-range ?page= clamps to the last real page
+  // instead of rendering an empty table.
+  let countQuery = supabase.from("expenses").select("id", { count: "exact", head: true });
+  if (property) countQuery = countQuery.eq("property_id", property);
+  const { count: totalCount } = await countQuery;
+  const { page, pageCount, from, to } = pageInfo(requestedPage, PAGE_SIZE, totalCount ?? 0);
+
   let query = supabase
     .from("expenses")
     .select("*, categories ( name ), properties ( address )")
     .order("date", { ascending: false })
-    .limit(200);
+    .order("id", { ascending: false })
+    .range(from, to);
   if (property) query = query.eq("property_id", property);
 
-  const [{ data: expenses }, { data: properties }, { data: categories }, { data: rules }] =
-    await Promise.all([
+  // Financial-year totals have to cover every expense in the year, not just the
+  // page on screen, so they are summed from a separate lightweight query.
+  let totalsQuery = supabase
+    .from("expenses")
+    .select("amount, gst_amount")
+    .gte("date", fy.start)
+    .lte("date", fy.end);
+  if (property) totalsQuery = totalsQuery.eq("property_id", property);
+
+  const [
+    { data: expenses },
+    { data: fyRows },
+    { data: properties },
+    { data: categories },
+    { data: rules },
+  ] = await Promise.all([
       query,
+      totalsQuery,
       supabase.from("properties").select("id, address").order("address"),
       supabase
         .from("categories")
@@ -51,9 +80,9 @@ export default async function ExpensesPage({
     ]);
 
   const rows = (expenses ?? []) as Expense[];
-  const fyRows = rows.filter((e) => e.date >= fy.start && e.date <= fy.end);
-  const totalFY = fyRows.reduce((s, e) => s + Number(e.amount), 0);
-  const gstFY = fyRows.reduce((s, e) => s + Number(e.gst_amount), 0);
+  const totals = (fyRows ?? []) as Pick<Expense, "amount" | "gst_amount">[];
+  const totalFY = totals.reduce((s, e) => s + Number(e.amount), 0);
+  const gstFY = totals.reduce((s, e) => s + Number(e.gst_amount), 0);
   const propertyList = (properties ?? []) as Pick<Property, "id" | "address">[];
   const categoryList = (categories ?? []) as Category[];
 
@@ -67,6 +96,10 @@ export default async function ExpensesPage({
         gstFY={gstFY}
         fyLabel={fy.label}
         activeProperty={property ?? ""}
+        page={page}
+        pageCount={pageCount}
+        pageSize={PAGE_SIZE}
+        totalCount={totalCount ?? rows.length}
       />
       <RecurringPanel
         rules={(rules ?? []) as unknown as RecurringRule[]}

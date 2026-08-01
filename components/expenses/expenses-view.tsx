@@ -6,8 +6,10 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { ExpenseFormSheet } from "./expense-form-sheet";
 import { deleteExpense } from "@/app/(app)/expenses/actions";
 import { audCents, fmtDate } from "@/lib/format";
+import { pageRangeLabel } from "@/lib/pagination";
 import type { Category, Expense, Property } from "@/lib/types";
-import { ArrowUpFromLine, Plus, Pencil, Trash2 } from "lucide-react";
+import { ArrowUpFromLine, ChevronLeft, ChevronRight, Plus, Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -19,6 +21,10 @@ export function ExpensesView({
   gstFY,
   fyLabel,
   activeProperty,
+  page,
+  pageCount,
+  pageSize,
+  totalCount,
 }: {
   expenses: Expense[];
   properties: Pick<Property, "id" | "address">[];
@@ -27,6 +33,10 @@ export function ExpensesView({
   gstFY: number;
   fyLabel: string;
   activeProperty: string;
+  page: number;
+  pageCount: number;
+  pageSize: number;
+  totalCount: number;
 }) {
   const router = useRouter();
   const [adding, setAdding] = useState(false);
@@ -40,9 +50,21 @@ export function ExpensesView({
     router.refresh();
   }
 
+  // Changing the filter has to reset paging, or you land on a page that no
+  // longer exists for the narrower result set.
   function onFilter(propertyId: string) {
     router.push(propertyId ? `/expenses?property=${propertyId}` : "/expenses");
   }
+
+  function hrefForPage(n: number) {
+    const params = new URLSearchParams();
+    if (activeProperty) params.set("property", activeProperty);
+    if (n > 1) params.set("page", String(n));
+    const qs = params.toString();
+    return qs ? `/expenses?${qs}` : "/expenses";
+  }
+
+  const { first: firstOnPage, last: lastOnPage } = pageRangeLabel(page, pageSize, expenses.length);
 
   const hasProperties = properties.length > 0;
 
@@ -160,6 +182,31 @@ export function ExpensesView({
         </div>
       )}
 
+      {pageCount > 1 && (
+        <nav
+          aria-label="Expense pages"
+          className="mt-3 flex shrink-0 flex-wrap items-center justify-between gap-3 text-sm"
+        >
+          <p className="text-muted">
+            Showing <span className="tabular text-ink">{firstOnPage}</span>–
+            <span className="tabular text-ink">{lastOnPage}</span> of{" "}
+            <span className="tabular text-ink">{totalCount}</span>
+          </p>
+          <div className="flex items-center gap-2">
+            <PageLink href={hrefForPage(page - 1)} disabled={page <= 1} label="Previous page">
+              <ChevronLeft className="size-4" aria-hidden /> Previous
+            </PageLink>
+            <span className="text-muted">
+              Page <span className="tabular text-ink">{page}</span> of{" "}
+              <span className="tabular text-ink">{pageCount}</span>
+            </span>
+            <PageLink href={hrefForPage(page + 1)} disabled={page >= pageCount} label="Next page">
+              Next <ChevronRight className="size-4" aria-hidden />
+            </PageLink>
+          </div>
+        </nav>
+      )}
+
       <ExpenseFormSheet
         open={adding}
         onClose={() => setAdding(false)}
@@ -176,5 +223,32 @@ export function ExpensesView({
         />
       )}
     </>
+  );
+}
+
+function PageLink({
+  href,
+  disabled,
+  label,
+  children,
+}: {
+  href: string;
+  disabled: boolean;
+  label: string;
+  children: React.ReactNode;
+}) {
+  const base =
+    "flex items-center gap-1 rounded-(--radius-field) border border-line px-2.5 py-1.5 text-sm";
+  if (disabled) {
+    return (
+      <span aria-disabled className={`${base} cursor-not-allowed text-muted opacity-50`}>
+        {children}
+      </span>
+    );
+  }
+  return (
+    <Link href={href} aria-label={label} className={`${base} bg-card text-ink hover:border-brand`}>
+      {children}
+    </Link>
   );
 }

@@ -14,9 +14,12 @@ export interface CalEvent {
 
 /** Month bounds as plain yyyy-mm-dd strings — no Date maths, so no timezone drift. */
 export function monthBounds(month: string): { start: string; end: string; year: number; m: number } {
+  // "" and "----" both parse to 0, which is finite — so the year needs a
+  // plausibility check, not just a NaN check, or the calendar queries year 0.
   const [y, mm] = month.split("-").map(Number);
-  const year = Number.isFinite(y) ? y : new Date().getFullYear();
-  const m = Number.isFinite(mm) && mm >= 1 && mm <= 12 ? mm : new Date().getMonth() + 1;
+  const now = new Date();
+  const year = Number.isFinite(y) && y >= 1970 && y <= 9999 ? y : now.getFullYear();
+  const m = Number.isFinite(mm) && mm >= 1 && mm <= 12 ? mm : now.getMonth() + 1;
   const last = new Date(year, m, 0).getDate();
   const p = (n: number) => String(n).padStart(2, "0");
   return { start: `${year}-${p(m)}-01`, end: `${year}-${p(m)}-${p(last)}`, year, m };

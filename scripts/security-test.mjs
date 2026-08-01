@@ -6,6 +6,7 @@
  *   1. Two unrelated workspaces cannot see each other's data.
  *   2. A read-only role (accountant) can read but cannot insert/update/delete.
  *   3. Removing a member revokes access immediately.
+ *   4. An owner cannot promote their own workspace to a paid plan.
  *
  * Run: npm run test:security
  * Creates throwaway accounts, cleans up after itself, and exits non-zero on
@@ -187,6 +188,57 @@ try {
     r.json()
   );
   check("removed member loses access immediately", Array.isArray(afterRemoval) && afterRemoval.length === 0);
+
+  // 4. Billing integrity: the plan column gates paid limits, and the workspace
+  // update policy lets an owner write their own workspace row — so the trigger
+  // must be what stops a self-serve upgrade.
+  const beforePlan = await api(`/rest/v1/workspaces?select=plan&id=eq.${ownerWs}`, {
+    token: ownerTok,
+  }).then((r) => r.json());
+
+  await api(`/rest/v1/workspaces?id=eq.${ownerWs}`, {
+    token: ownerTok,
+    method: "PATCH",
+    body: { plan: "agency" },
+    prefer: "return=representation",
+  });
+  const afterUpgrade = await api(`/rest/v1/workspaces?select=plan&id=eq.${ownerWs}`, {
+    token: ownerTok,
+  }).then((r) => r.json());
+  check(
+    "owner cannot upgrade their own plan",
+    afterUpgrade?.[0]?.plan === (beforePlan?.[0]?.plan ?? "free"),
+    `plan is now "${afterUpgrade?.[0]?.plan}"`
+  );
+
+  // The same write must still succeed for service_role, or the Stripe webhook
+  // could never grant a plan anyone actually paid for.
+  if (SERVICE_KEY) {
+    await fetch(`${URL_BASE}/rest/v1/workspaces?id=eq.${ownerWs}`, {
+      method: "PATCH",
+      headers: {
+        apikey: SERVICE_KEY,
+        Authorization: `Bearer ${SERVICE_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ plan: "pro" }),
+    });
+    const afterWebhook = await api(`/rest/v1/workspaces?select=plan&id=eq.${ownerWs}`, {
+      token: ownerTok,
+    }).then((r) => r.json());
+    check("service_role (the Stripe webhook) can still set a plan", afterWebhook?.[0]?.plan === "pro");
+  }
+
+  // Owners must keep control of the non-billing fields.
+  await api(`/rest/v1/workspaces?id=eq.${ownerWs}`, {
+    token: ownerTok,
+    method: "PATCH",
+    body: { name: "Renamed by owner" },
+  });
+  const renamed = await api(`/rest/v1/workspaces?select=name&id=eq.${ownerWs}`, {
+    token: ownerTok,
+  }).then((r) => r.json());
+  check("owner can still rename their workspace", renamed?.[0]?.name === "Renamed by owner");
 
   // Cleanup: owner removes their own data and workspace.
   await api(`/rest/v1/properties?workspace_id=eq.${ownerWs}`, { token: ownerTok, method: "DELETE" });

@@ -11,11 +11,23 @@ export default function ErrorPage({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Surfaces in the browser console and, for server errors, in Vercel logs
-    // alongside the matching digest.
     console.error(
       JSON.stringify({ level: "error", event: "client.render_error", message: error.message, digest: error.digest })
     );
+    // Report it server-side too, so a crash in someone else's browser reaches
+    // the same place as a server error instead of dying in their console.
+    void fetch("/api/client-error", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: error.message,
+        digest: error.digest,
+        route: typeof location === "undefined" ? undefined : location.pathname,
+      }),
+      keepalive: true,
+    }).catch(() => {
+      // Already showing an error page; a failed report changes nothing.
+    });
   }, [error]);
 
   return (

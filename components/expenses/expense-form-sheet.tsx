@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createExpense, updateExpense } from "@/app/(app)/expenses/actions";
-import { todayISO } from "@/lib/format";
+import { gstFromInclusive, todayISO } from "@/lib/format";
 import type { Category, Expense, Property } from "@/lib/types";
 import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -53,8 +53,7 @@ export function ExpenseFormSheet({
   function autoGst() {
     const amount = Number(amountRef.current?.value ?? 0);
     if (gstRef.current && amount > 0) {
-      // GST-inclusive price: GST component is 1/11th of the total.
-      gstRef.current.value = (amount / 11).toFixed(2);
+      gstRef.current.value = gstFromInclusive(amount).toFixed(2);
     }
   }
 
