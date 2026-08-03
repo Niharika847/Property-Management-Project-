@@ -10,6 +10,8 @@ export interface Property {
   bedrooms: number | null;
   bathrooms: number | null;
   parking: number | null;
+  /** Square metres. */
+  land_size: number | null;
   purchase_price: number | null;
   purchase_date: string | null;
   current_value: number | null;

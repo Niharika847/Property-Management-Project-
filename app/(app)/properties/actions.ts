@@ -16,6 +16,7 @@ function propertyFields(form: FormData) {
     bedrooms: num(form, "bedrooms"),
     bathrooms: num(form, "bathrooms"),
     parking: num(form, "parking"),
+    land_size: num(form, "land_size"),
     purchase_price: num(form, "purchase_price"),
     purchase_date: str(form, "purchase_date") || null,
     current_value: num(form, "current_value"),

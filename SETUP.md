@@ -103,7 +103,45 @@ enabled.
 
 ---
 
-## 5. Error monitoring (optional)
+## 5. Address autocomplete & property data (optional)
+
+**Address autocomplete works right now with no key**, using OpenStreetMap's
+Nominatim. Coverage of Australian unit-level addresses is thin and OSM asks for
+no more than ~1 request/second, so it is fine for getting started and not for
+real traffic. To upgrade:
+
+```
+GOOGLE_PLACES_API_KEY=...
+```
+
+Create it in [Google Cloud Console](https://console.cloud.google.com) with the
+**Places API (New)** enabled, and restrict it to your Vercel domain. Google
+gives a monthly free allowance; past that, autocomplete is billed per session.
+The app picks Google automatically once the key is present.
+
+**Bedrooms, bathrooms, land size and a value estimate are a different problem.**
+Geocoders know where a building is, not what is inside it. That data is
+licensed from commercial providers, and there is no free tier worth relying on:
+
+- **Domain** ([developer.domain.com.au](https://developer.domain.com.au)) —
+  easiest to start with, has an introductory package. This is the one wired up.
+- **CoreLogic / PropTrack** — richer valuation data, enterprise contracts.
+
+```
+DOMAIN_API_KEY=...
+```
+
+Without it, the address still fills in suburb/state/postcode and the remaining
+fields are left for you to type. The app will never guess a bedroom count or a
+valuation — a made-up number in a tax and lending context is worse than a blank
+field, which is also why the AI assistant is not used for this.
+
+> The Domain adapter in `lib/property-data.ts` is written but **unverified** —
+> it needs a real key to test against.
+
+---
+
+## 6. Error monitoring (optional)
 
 Set `ERROR_WEBHOOK_URL` to a Slack or Discord incoming webhook (or any endpoint
 that accepts a JSON POST). Errors are then pushed there as well as written to
